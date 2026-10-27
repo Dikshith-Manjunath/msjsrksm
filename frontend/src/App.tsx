@@ -176,8 +176,8 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="app" style={{ maxWidth: currentTab === 'landing' ? '100%' : 1440 }}>
-      {/* Top Navigation */}
+    <>
+      {/* Top Navigation — outside .app so it's always full viewport width */}
       <Header
         currentTab={currentTab}
         onSelectTab={handleSelectTab}
@@ -189,61 +189,63 @@ export const App: React.FC = () => {
         isSyncing={isSyncing}
       />
 
-      {/* Real-Time Market Status Strip (Shown on Desk and Risk views) */}
-      {currentTab !== 'landing' && (
-        <StatusStrip deliveryDate={deliveryDate} gateClosureHour={gateClosureHour} />
-      )}
-
-      {/* Main Tab Views */}
-      <main>
-        {currentTab === 'landing' ? (
-          <LandingPage onNavigate={handleSelectTab} />
-        ) : currentTab === 'desk' ? (
-          <DecisionDesk
-            data={forecastData}
-            loading={loadingDesk}
-            deliveryDate={deliveryDate}
-            onChangeDate={setDeliveryDate}
-            gateClosureHour={gateClosureHour}
-            onChangeGateClosure={setGateClosureHour}
-            resolution={resolution}
-            onChangeResolution={setResolution}
-            units={units}
-            onChangeUnits={setUnits}
-            allDates={allDates}
-          />
-        ) : (
-          <RiskEvaluation
-            metrics={metricsData}
-            loading={loadingRisk}
-            startDate={startDate}
-            endDate={endDate}
-            onChangeDateRange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
-            }}
-            gateClosureHour={riskGateHour}
-            onChangeGateClosure={setRiskGateHour}
-            hoursFilter={hoursFilter}
-            onChangeHoursFilter={setHoursFilter}
-            units={units}
-            onChangeUnits={setUnits}
-          />
+      <div className="app">
+        {/* Real-Time Market Status Strip (Shown on Desk and Risk views) */}
+        {currentTab !== 'landing' && (
+          <StatusStrip deliveryDate={deliveryDate} gateClosureHour={gateClosureHour} />
         )}
-      </main>
 
-      {/* Universal Site Footer on ALL Pages */}
-      <Footer pingMs={pingMs} onNavigate={handleSelectTab} />
+        {/* Main Tab Views */}
+        <main>
+          {currentTab === 'landing' ? (
+            <LandingPage onNavigate={handleSelectTab} />
+          ) : currentTab === 'desk' ? (
+            <DecisionDesk
+              data={forecastData}
+              loading={loadingDesk}
+              deliveryDate={deliveryDate}
+              onChangeDate={setDeliveryDate}
+              gateClosureHour={gateClosureHour}
+              onChangeGateClosure={setGateClosureHour}
+              resolution={resolution}
+              onChangeResolution={setResolution}
+              units={units}
+              onChangeUnits={setUnits}
+              allDates={allDates}
+            />
+          ) : (
+            <RiskEvaluation
+              metrics={metricsData}
+              loading={loadingRisk}
+              startDate={startDate}
+              endDate={endDate}
+              onChangeDateRange={(s, e) => {
+                setStartDate(s);
+                setEndDate(e);
+              }}
+              gateClosureHour={riskGateHour}
+              onChangeGateClosure={setRiskGateHour}
+              hoursFilter={hoursFilter}
+              onChangeHoursFilter={setHoursFilter}
+              units={units}
+              onChangeUnits={setUnits}
+            />
+          )}
+        </main>
 
-      {/* Tour / Onboarding Modal */}
-      <TourModal isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+        {/* Universal Site Footer on ALL Pages */}
+        <Footer pingMs={pingMs} onNavigate={handleSelectTab} />
 
-      {/* Gate Sensitivity Comparison Modal */}
-      <SensitivityModal
-        isOpen={isSensitivityOpen}
-        onClose={() => setIsSensitivityOpen(false)}
-        deliveryDate={deliveryDate}
-      />
-    </div>
+        {/* Tour / Onboarding Modal */}
+        <TourModal isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
+
+        {/* Gate Sensitivity Comparison Modal */}
+        <SensitivityModal
+          isOpen={isSensitivityOpen}
+          onClose={() => setIsSensitivityOpen(false)}
+          deliveryDate={deliveryDate}
+        />
+      </div>
+    </>
   );
 };

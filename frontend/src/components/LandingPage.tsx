@@ -33,32 +33,55 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     camera.lookAt(0, -1, 0);
 
     const CELL = 2;
+    const GRID_HALF = 40; // half-extent in world units (grid spans -40..+40 on X and Z)
+    const SCROLL_SPEED = 2.4; // world-units per second
+
     const group = new THREE.Group();
     scene.add(group);
 
-    // Floor grid: black centre line, light grey cells
+    // Floor grid — static, camera handles "scrolling" feel
     const grid = new THREE.GridHelper(120, 60, 0x000000, 0xb8b8b8);
-    grid.material.transparent = true;
-    grid.material.opacity = 0.7;
+    (grid.material as any).transparent = true;
+    (grid.material as any).opacity = 0.7;
     grid.position.y = -2;
     group.add(grid);
 
-    // Scattered "bricks": small black squares on random grid intersections
-    const pts: number[] = [];
+    // Deterministic seeded RNG
     let seed = 11;
     function rnd() {
       seed = (seed * 16807) % 2147483647;
       return seed / 2147483647;
     }
-    for (let i = 0; i < 160; i++) {
-      const gx = Math.round((rnd() - 0.5) * 40) * CELL;
-      const gz = Math.round((rnd() - 0.5) * 40) * CELL;
-      pts.push(gx, -2 + 0.02, gz);
+
+    // Per-dot data: each dot has a fixed column (gx) and a Z phase offset
+    // so they spread across the full depth and scroll individually.
+    const DOT_COUNT = 160;
+    const dotGx: number[] = [];
+    const dotPhase: number[] = []; // phase in [0, GRID_HALF*2) — dot's starting Z relative to group
+
+    for (let i = 0; i < DOT_COUNT; i++) {
+      dotGx.push(Math.round((rnd() - 0.5) * 40) * CELL);
+      dotPhase.push(rnd() * GRID_HALF * 2); // spread evenly across depth at start
     }
+
+    // Build a flat positions array we'll mutate every frame
+    const positions = new Float32Array(DOT_COUNT * 3);
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    const mat = new THREE.PointsMaterial({ color: 0x000000, size: 7, sizeAttenuation: false });
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    // Per-dot alpha attribute for fade-in near the near edge
+    const alphas = new Float32Array(DOT_COUNT);
+    geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+
+    const mat = new THREE.PointsMaterial({
+      color: 0x000000,
+      size: 7,
+      sizeAttenuation: false,
+      transparent: true,
+    });
+
     const dots = new THREE.Points(geo, mat);
+    dots.position.y = -2 + 0.02;
     group.add(dots);
 
     function resize() {
@@ -82,6 +105,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     };
     window.addEventListener('pointermove', onPointerMove);
 
+    // The grid itself scrolls — we move the group's Z so the GridHelper
+    // appears to travel toward the camera. CELL wrap keeps it seamless.
+    // Dots scroll at the SAME speed but we compute their world-Z per frame
+    // by advancing their phase, so there is never a discrete position jump.
+    const DEPTH = GRID_HALF * 2; // total Z extent dots are spread across
+
     const start = performance.now();
     let animId: number;
     let running = true;
@@ -89,15 +118,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     function frame(now: number) {
       if (!running) return;
       const t = (now - start) / 1000;
-      group.position.z = -((t * 2.4) % CELL);
+
+      // Move grid group for seamless grid scroll
+      group.position.z = -((t * SCROLL_SPEED) % CELL);
+
+      // Camera sway + parallax
       eased.x += (target.x - eased.x) * 0.04;
       eased.y += (target.y - eased.y) * 0.04;
       camera.position.x = Math.sin(t * 0.25) * 1.2 + eased.x * 3;
       camera.position.y = 7 + eased.y * -2;
       camera.lookAt(0, -1, 0);
 
-      mat.opacity = 0.75 + 0.25 * Math.sin(t * 1.6);
-      mat.transparent = true;
+      // Update each dot's Z continuously — no snapping
+      const travelled = t * SCROLL_SPEED; // total distance scrolled
+      for (let i = 0; i < DOT_COUNT; i++) {
+        // dot's Z in group-local space, wrapping over [0, DEPTH)
+        const rawZ = (dotPhase[i] + travelled) % DEPTH;
+        // map [0, DEPTH) → [-GRID_HALF, +GRID_HALF] so dots travel
+        // from back (far) toward the near edge (z = +GRID_HALF → toward camera)
+        const worldZ = rawZ - GRID_HALF;
+
+        positions[i * 3]     = dotGx[i];
+        positions[i * 3 + 1] = 0;
+        positions[i * 3 + 2] = worldZ;
+
+        // Fade in smoothly as dot enters from the back (worldZ near -GRID_HALF)
+        // and keep fully visible until it reaches the near edge
+        const fadeDepth = GRID_HALF * 0.18; // fade over ~18% of total depth
+        const fadeIn = Math.min(1, (rawZ) / fadeDepth);
+        alphas[i] = fadeIn;
+      }
+
+      (geo.attributes.position as any).needsUpdate = true;
+      mat.opacity = 0.8;
       renderer.render(scene, camera);
 
       if (!reduce) animId = requestAnimationFrame(frame);

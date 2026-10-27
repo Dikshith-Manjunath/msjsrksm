@@ -26,14 +26,12 @@ body {
   font-family: var(--sans);
   font-size: 14px;
   line-height: 1.5;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
 
-.app { max-width: 1440px; margin: 0 auto; padding-block: 0 28px; }
+.app { max-width: 1440px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)) 28px; }
 
 /* Top navigation */
 .topnav {
@@ -42,7 +40,8 @@ button { cursor: pointer; }
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding-block: 14px;
+  /* Full-width edge-to-edge with inner padding matching .app */
+  padding: 14px max(16px, env(safe-area-inset-left, 0px));
   border-bottom: 1px solid var(--fg);
 }
 .brand { font-family: var(--mono); font-size: 13px; font-weight: 600; margin: 0; }
