@@ -23,7 +23,7 @@ async def main():
     init_db()
     repo = Repository()
     seeder = DataSeeder(repo)
-    result = await seeder.seed_january_2026(force=False)
+    result = await seeder.seed_january_2026(force=True)
     logger.info(f"Seeder result: {result}")
 
 if __name__ == "__main__":
