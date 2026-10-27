@@ -1,0 +1,404 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>GridBricks App Shell</title>
+<style>
+/* Layout: fixed top navigation, a status strip under it, then one view at a
+   time. Views switch on the hash (#desk and #risk). Monochrome, as in the
+   onboarding prototype. */
+
+:root {
+  color-scheme: light;
+  --bg: #FFFFFF;
+  --fg: #000000;
+  --muted: #4A4A4A;
+  --dim: #767676;
+  --line: #E4E4E4;
+  --surface: #F4F4F4;
+  --sans: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+
+.app {
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-block: 0 24px;
+}
+
+/* Top navigation */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--fg);
+}
+.brand {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+}
+.brand span { color: var(--dim); font-weight: 400; }
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--fg);
+}
+.tab {
+  background: var(--bg);
+  border: 0;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--fg);
+}
+.tab[aria-current="page"] {
+  background: var(--fg);
+  color: var(--bg);
+}
+.health {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.health .sep { color: var(--dim); }
+
+/* Status strip */
+.statusbar {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  gap: 0;
+  align-items: stretch;
+  border-bottom: 1px solid var(--line);
+}
+.cell {
+  padding: 14px 18px 14px 0;
+  min-width: 0;
+}
+.cell + .cell {
+  padding-left: 18px;
+  border-left: 1px solid var(--line);
+}
+.cell-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  margin: 0 0 4px;
+}
+.cell-value {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.market {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  border: 1px solid var(--fg);
+  border-radius: 999px;
+  padding: 5px 11px;
+  white-space: nowrap;
+  align-self: center;
+}
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg);
+  animation: blink 1.6s steps(2, start) infinite;
+}
+@keyframes blink { to { opacity: 0.25; } }
+.sample-tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px dashed var(--muted);
+  padding: 2px 7px;
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+.clock-cell { text-align: right; }
+.clock-cell .cell-value { text-align: right; }
+
+/* Views */
+.view {
+  flex: 1;
+  padding-block: 28px;
+  min-width: 0;
+}
+.view[hidden] { display: none; }
+.view-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+h1 {
+  font-size: clamp(22px, 4vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.view-sub {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Placeholder blocks, sized to the layout of the spec */
+.grid-kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  border-top: 1px solid var(--fg);
+  border-left: 1px solid var(--line);
+}
+.kpi {
+  padding: 16px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.kpi-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dim);
+  margin: 0 0 14px;
+}
+.skel {
+  display: block;
+  background: var(--surface);
+  height: 14px;
+  margin-bottom: 8px;
+}
+.skel.big { height: 30px; width: 60%; }
+.skel.short { width: 40%; }
+
+.panel {
+  border: 1px solid var(--line);
+  margin-top: 16px;
+  min-width: 0;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.panel-body {
+  padding: 16px;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(
+    to right, transparent 0, transparent 63px, var(--line) 63px, var(--line) 64px
+  );
+}
+.placeholder {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  background: var(--bg);
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 1024px) {
+  .split { grid-template-columns: 65fr 35fr; }
+}
+
+@media (max-width: 760px) {
+  .statusbar { grid-template-columns: 1fr 1fr; }
+  .statusbar .cell:nth-child(1) { grid-column: 1 / -1; padding-right: 0; }
+  .statusbar .cell:nth-child(3) { padding-left: 0; border-left: 0; }
+  .statusbar .cell:nth-child(4) { grid-column: 1 / -1; padding-left: 0; border-left: 0; border-top: 1px solid var(--line); text-align: left; }
+  .clock-cell, .clock-cell .cell-value { text-align: left; }
+  .health { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot { animation: none; }
+}
+</style>
+
+<div class="app">
+  <header class="topnav">
+    <p class="brand">GridBricks <span>//</span> WindForecast OS</p>
+    <nav class="tabs" aria-label="Views">
+      <button class="tab" type="button" data-route="desk">Decision Desk</button>
+      <button class="tab" type="button" data-route="risk">Risk &amp; Evaluation</button>
+    </nav>
+    <div class="health" aria-label="System health">
+      <span>Latency 3 ms</span>
+      <span class="sep">|</span>
+      <span>DB SQLite WAL</span>
+    </div>
+  </header>
+
+  <section class="statusbar" aria-label="Market status">
+    <div class="cell">
+      <span class="market"><span class="live-dot" aria-hidden="true"></span>UK EPEX SPOT GB DAM</span>
+    </div>
+    <div class="cell">
+      <p class="cell-label">Delivery</p>
+      <p class="cell-value">Thu 15 Jan 2026<span class="sample-tag">SAMPLE</span></p>
+    </div>
+    <div class="cell">
+      <p class="cell-label">Bidding cutoff</p>
+      <p class="cell-value">Wed 14 Jan 2026 @ 11:00 GMT</p>
+    </div>
+    <div class="cell clock-cell">
+      <p class="cell-label">Settlement clock (GMT)</p>
+      <p class="cell-value" id="clock">--:--:--</p>
+    </div>
+  </section>
+
+  <!-- Decision Desk: placeholder layout until Phase 3 -->
+  <main class="view" id="view-desk" data-view="desk">
+    <div class="view-head">
+      <h1>Decision Desk</h1>
+      <p class="view-sub">Operational view · Delivery Thu 15 Jan 2026</p>
+    </div>
+
+    <div class="grid-kpi" aria-label="Key metrics">
+      <div class="kpi"><p class="kpi-label">MAE</p><span class="skel big"></span><span class="skel short"></span></div>
+      <div class="kpi"><p class="kpi-label">RMSE</p><span class="skel big"></span><span class="skel short"></span></div>
+      <div class="kpi"><p class="kpi-label">Mean bias error</p><span class="skel big"></span><span class="skel short"></span></div>
+      <div class="kpi"><p class="kpi-label">Max imbalance</p><span class="skel big"></span><span class="skel short"></span></div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head"><span>Actual vs forecast · 48 settlement periods</span><span>MW</span></div>
+        <div class="panel-body"><span class="placeholder">Hero chart, Phase 3</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span>Insights</span><span>Rule-based</span></div>
+        <div class="panel-body"><span class="placeholder">Insights panel, Phase 3</span></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Risk & Evaluation: placeholder layout until Phase 4 -->
+  <main class="view" id="view-risk" data-view="risk" hidden>
+    <div class="view-head">
+      <h1>Risk &amp; Evaluation</h1>
+      <p class="view-sub">Analytical view · January 2026</p>
+    </div>
+
+    <div class="grid-kpi" aria-label="Scorecard">
+      <div class="kpi"><p class="kpi-label">WAPE</p><span class="skel big"></span><span class="skel short"></span></div>
+      <div class="kpi"><p class="kpi-label">Correlation R²</p><span class="skel big"></span><span class="skel short"></span></div>
+      <div class="kpi"><p class="kpi-label">Over vs under ratio</p><span class="skel big"></span><span class="skel short"></span></div>
+      <div class="kpi"><p class="kpi-label">Volumetric imbalance</p><span class="skel big"></span><span class="skel short"></span></div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <div class="panel-head"><span>Error distribution</span><span>250 MW buckets</span></div>
+        <div class="panel-body"><span class="placeholder">Histogram, Phase 4</span></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span>Hourly error</span><span>24 columns</span></div>
+        <div class="panel-body"><span class="placeholder">Heatmap, Phase 4</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var ROUTES = { desk: "view-desk", risk: "view-risk" };
+  var tabs = document.querySelectorAll(".tab");
+  var views = document.querySelectorAll(".view");
+
+  function currentRoute() {
+    var h = (location.hash || "").replace("#", "");
+    return ROUTES.hasOwnProperty(h) ? h : "desk";
+  }
+
+  function show() {
+    var route = currentRoute();
+    views.forEach(function (v) {
+      v.hidden = v.id !== ROUTES[route];
+    });
+    tabs.forEach(function (t) {
+      if (t.dataset.route === route) t.setAttribute("aria-current", "page");
+      else t.removeAttribute("aria-current");
+    });
+    var active = document.getElementById(ROUTES[route]);
+    if (active) active.focus({ preventScroll: true });
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      var route = t.dataset.route;
+      if (location.hash !== "#" + route) location.hash = route;
+      else show();
+    });
+  });
+
+  window.addEventListener("hashchange", show);
+
+  // Settlement clock: GMT wall time, updated each second.
+  var clock = document.getElementById("clock");
+  function tick() {
+    var d = new Date();
+    var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+    clock.textContent = pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds());
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  show();
+})();
+</script>
+
+</body></html>
