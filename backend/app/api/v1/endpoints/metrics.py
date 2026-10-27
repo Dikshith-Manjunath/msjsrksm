@@ -40,9 +40,14 @@ def get_metrics(
         pattern=r"^(half_hour|hour)$",
         description="Temporal resolution ('half_hour' or 'hour')"
     ),
+    hours_filter: str = Query(
+        "all",
+        pattern=r"^(all|peak|offpeak)$",
+        description="Hours filter: 'all', 'peak' (07:00-19:00 GMT), or 'offpeak' (19:00-07:00 GMT)"
+    ),
     calculator: MetricsCalculator = Depends(get_metrics_calculator)
 ) -> QuantitativeMetricsResponse:
-    cache_key = f"{start_date}_{end_date}_{gate_closure_hour}_{resolution}"
+    cache_key = f"{start_date}_{end_date}_{gate_closure_hour}_{resolution}_{hours_filter}"
     if cache_key in _METRICS_CACHE:
         return _METRICS_CACHE[cache_key]
 
@@ -51,7 +56,8 @@ def get_metrics(
             start_date_str=start_date,
             end_date_str=end_date,
             gate_closure_hour=gate_closure_hour,
-            resolution=resolution
+            resolution=resolution,
+            hours_filter=hours_filter
         )
         _METRICS_CACHE[cache_key] = response
         return response

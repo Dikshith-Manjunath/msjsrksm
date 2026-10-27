@@ -68,6 +68,10 @@ def test_metrics_vectorized_accuracy(populated_repo):
     assert res.peak_offpeak.offpeak_mae_mw == 150.0
     assert res.peak_offpeak.offpeak_bias_mw == -50.0
     
-    # Distribution sum
-    total_pct = sum(b.percentage for b in res.error_distribution)
-    assert abs(total_pct - 100.0) < 0.1
+    # Advanced trading metrics check
+    assert res.correlation_r2 >= 0.0
+    assert res.net_imbalance_gwh == -0.1  # -200 MW * 0.5h / 1000 = -0.1 GWh
+    assert res.bias_ratio.pct_over_forecast == 50.0  # 2 out of 4
+    assert res.bias_ratio.pct_under_forecast == 50.0 # 2 out of 4
+    assert len(res.hourly_box_plots) == 24
+    assert res.distribution_stats.mean_mw == -50.0
