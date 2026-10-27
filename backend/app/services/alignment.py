@@ -77,6 +77,7 @@ class AlignmentService:
             hour = total_minutes // 60
             minute = total_minutes % 60
             sp_start_iso = f"{delivery_date}T{hour:02d}:{minute:02d}:00Z"
+            hour_iso = f"{delivery_date}T{hour:02d}:00:00Z"
             
             # Actual value
             actual_row = act_by_sp.get(sp)
@@ -86,16 +87,19 @@ class AlignmentService:
             forecast_mw = None
             publish_time_used = None
             
-            hour_iso = f"{delivery_date}T{hour:02d}:00:00Z"
-            
-            if minute == 0:
-                # Top of the hour: exact match with hourly WINDFOR
+            # Check if exact forecast exists for this 30-min start_time
+            fc_exact = fc_map.get(sp_start_iso)
+            if fc_exact:
+                forecast_mw = round(fc_exact["generation"], 2)
+                publish_time_used = fc_exact["publish_time"]
+            elif minute == 0:
+                # Top of the hour: match with hourly WINDFOR
                 fc_row = fc_map.get(hour_iso)
                 if fc_row:
                     forecast_mw = round(fc_row["generation"], 2)
                     publish_time_used = fc_row["publish_time"]
             else:
-                # Half past the hour (:30)
+                # Half past the hour (:30): interpolate or step
                 fc_current = fc_map.get(hour_iso)
                 next_hour_iso = f"{delivery_date}T{(hour + 1):02d}:00:00Z" if hour < 23 else None
                 fc_next = fc_map.get(next_hour_iso) if next_hour_iso else None
