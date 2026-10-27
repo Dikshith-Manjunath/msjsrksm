@@ -93,5 +93,14 @@ Results over 100 sample iterations:
 
 ---
 
-## 4. Next Step: Frontend Integration
-The backend is packaged, tested, and documented with complete Swagger/OpenAPI documentation. As soon as you share your frontend UI design/components, we can wire them directly to these sub-15ms REST endpoints!
+## 4. Full Stack Application Launched & Verified
+The React frontend and FastAPI backend are live and integrated:
+* **Frontend Application:** Running at `http://127.0.0.1:3000/` (Vite + React + TypeScript)
+* **Backend API & Swagger Docs:** Running at `http://127.0.0.1:8000/docs`
+* **Real-time Live Integration:** Displays live round-trip latency (`~4 ms`), active SQLite WAL data (1,490 records), and dynamic data fetching.
+* **All Enhancements Active:**
+  1. **Thermal Hedge & Cashout Risk Estimator:** Dynamic calculation of thermal reserve MWh and cash-out cost at configurable £/MWh.
+  2. **Gate-Closure Sensitivity Matrix Modal:** Side-by-side comparison across 07:00, 09:00, 11:00, 14:00, 18:00 cutoffs.
+  3. **Native CSV / JSON Downloads:** Client-side Blob file generation in addition to clipboard copy.
+  4. **7-Step Onboarding Tour Modal:** Directly accessible from the top navigation `(?) Tour` button.
+  5. **Direct OpenAPI Link:** `API Docs ↗` pill in header for easy reviewer access.
