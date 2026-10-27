@@ -3,14 +3,16 @@ import { Header } from './components/Header';
 import { StatusStrip } from './components/StatusStrip';
 import { DecisionDesk } from './components/DecisionDesk';
 import { RiskEvaluation } from './components/RiskEvaluation';
+import { LandingPage } from './components/LandingPage';
+import { Footer } from './components/Footer';
 import { TourModal } from './components/TourModal';
 import { SensitivityModal } from './components/SensitivityModal';
 import { fetchHealth, fetchDates, fetchForecasts, fetchMetrics, triggerSync } from './api/client';
 import { DayAheadForecastResponse, QuantitativeMetricsResponse, HealthStatus } from './types';
 
 export const App: React.FC = () => {
-  // Navigation & View Routing (#desk vs #risk)
-  const [currentTab, setCurrentTab] = useState<'desk' | 'risk'>('desk');
+  // Navigation & View Routing ('landing' | 'desk' | 'risk')
+  const [currentTab, setCurrentTab] = useState<'landing' | 'desk' | 'risk'>('desk');
 
   // Shared Settings
   const [deliveryDate, setDeliveryDate] = useState<string>('2026-01-15');
@@ -43,16 +45,21 @@ export const App: React.FC = () => {
     const handleHash = () => {
       const hash = window.location.hash;
       if (hash === '#risk') setCurrentTab('risk');
-      else setCurrentTab('desk');
+      else if (hash === '#landing' || hash === '#features' || hash === '#views' || hash === '#method' || hash === '#start') {
+        setCurrentTab('landing');
+      } else {
+        setCurrentTab('desk');
+      }
     };
     handleHash();
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  const handleSelectTab = (tab: 'desk' | 'risk') => {
+  const handleSelectTab = (tab: 'landing' | 'desk' | 'risk') => {
     setCurrentTab(tab);
-    window.location.hash = tab === 'risk' ? '#risk' : '#desk';
+    window.location.hash = tab === 'desk' ? '#desk' : tab === 'risk' ? '#risk' : '#landing';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Periodic health & ping check
@@ -86,7 +93,6 @@ export const App: React.FC = () => {
         }
       } catch (err) {
         console.error('Failed to load dates', err);
-        // Fallback for January 2026
         const fallback = Array.from({ length: 31 }, (_, i) => `2026-01-${String(i + 1).padStart(2, '0')}`);
         setAllDates(fallback);
       }
@@ -131,15 +137,14 @@ export const App: React.FC = () => {
   // Keyboard Shortcuts Handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if user is inside an input or select
       if (['INPUT', 'SELECT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) {
         return;
       }
 
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' && currentTab === 'desk') {
         const idx = allDates.indexOf(deliveryDate);
         if (idx > 0) setDeliveryDate(allDates[idx - 1]);
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' && currentTab === 'desk') {
         const idx = allDates.indexOf(deliveryDate);
         if (idx >= 0 && idx < allDates.length - 1) setDeliveryDate(allDates[idx + 1]);
       } else if (e.key === 't' || e.key === 'T') {
@@ -152,7 +157,7 @@ export const App: React.FC = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [allDates, deliveryDate]);
+  }, [allDates, deliveryDate, currentTab]);
 
   // Trigger Live Sync
   const handleTriggerSync = async () => {
@@ -171,7 +176,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="app">
+    <div className="app" style={{ maxWidth: currentTab === 'landing' ? '100%' : 1440 }}>
       {/* Top Navigation */}
       <Header
         currentTab={currentTab}
@@ -184,12 +189,16 @@ export const App: React.FC = () => {
         isSyncing={isSyncing}
       />
 
-      {/* Real-Time Market Status Strip */}
-      <StatusStrip deliveryDate={deliveryDate} gateClosureHour={gateClosureHour} />
+      {/* Real-Time Market Status Strip (Shown on Desk and Risk views) */}
+      {currentTab !== 'landing' && (
+        <StatusStrip deliveryDate={deliveryDate} gateClosureHour={gateClosureHour} />
+      )}
 
       {/* Main Tab Views */}
       <main>
-        {currentTab === 'desk' ? (
+        {currentTab === 'landing' ? (
+          <LandingPage onNavigate={handleSelectTab} />
+        ) : currentTab === 'desk' ? (
           <DecisionDesk
             data={forecastData}
             loading={loadingDesk}
@@ -222,6 +231,9 @@ export const App: React.FC = () => {
           />
         )}
       </main>
+
+      {/* Universal Site Footer on ALL Pages */}
+      <Footer pingMs={pingMs} onNavigate={handleSelectTab} />
 
       {/* Tour / Onboarding Modal */}
       <TourModal isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />

@@ -26,6 +26,7 @@ venv/
 ENV/
 env/
 .bin/
+.node/
 
 # Testing & Linting
 .pytest_cache/

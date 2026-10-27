@@ -2,8 +2,8 @@ import React from 'react';
 import { HealthStatus } from '../types';
 
 interface HeaderProps {
-  currentTab: 'desk' | 'risk';
-  onSelectTab: (tab: 'desk' | 'risk') => void;
+  currentTab: 'landing' | 'desk' | 'risk';
+  onSelectTab: (tab: 'landing' | 'desk' | 'risk') => void;
   health: HealthStatus | null;
   pingMs: number | null;
   onOpenTour: () => void;
@@ -23,12 +23,29 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncing,
 }) => {
   return (
-    <header className="topnav">
+    <header className="topnav site-header" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <h1 className="brand">
+        <a
+          href="#landing"
+          onClick={(e) => {
+            e.preventDefault();
+            onSelectTab('landing');
+          }}
+          className="brand"
+          style={{ textDecoration: 'none', cursor: 'pointer' }}
+        >
           GridBricks <span>// WindForecast OS</span>
-        </h1>
+        </a>
         <div className="tabs" role="tablist">
+          <button
+            className="tab"
+            role="tab"
+            aria-selected={currentTab === 'landing'}
+            aria-current={currentTab === 'landing' ? 'page' : undefined}
+            onClick={() => onSelectTab('landing')}
+          >
+            Overview
+          </button>
           <button
             className="tab"
             role="tab"
