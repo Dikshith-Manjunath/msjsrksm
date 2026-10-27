@@ -32,8 +32,9 @@ export const Header: React.FC<HeaderProps> = ({
             onSelectTab('landing');
           }}
           className="brand"
-          style={{ textDecoration: 'none', cursor: 'pointer' }}
+          style={{ textDecoration: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
         >
+          <img src="/platform-mark.svg" alt="" aria-hidden="true" style={{ width: 28, height: 28 }} />
           GridBricks <span>// WindForecast OS</span>
         </a>
         <div className="tabs" role="tablist">

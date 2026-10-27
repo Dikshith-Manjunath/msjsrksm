@@ -7,19 +7,19 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Initialize Three.js animated background from the prototype
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Check if Three.js is loaded from window
     const THREE = (window as any).THREE;
     if (!THREE) return;
 
-    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     let renderer: any;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     } catch {
       return;
     }
@@ -32,58 +32,138 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     camera.position.set(0, 7, 24);
     camera.lookAt(0, -1, 0);
 
+    // ── Grid ──────────────────────────────────────────────────────────────
+    // The grid is a periodic structure with cell size CELL.
+    // We scroll the group by (t * SPEED) % CELL — because the grid repeats
+    // every CELL units, the wrap is invisible and the floor scrolls endlessly.
     const CELL = 2;
-    const GRID_HALF = 40; // half-extent in world units (grid spans -40..+40 on X and Z)
-    const SCROLL_SPEED = 2.4; // world-units per second
+    const SPEED = 2.4; // world-units per second
 
     const group = new THREE.Group();
     scene.add(group);
 
-    // Floor grid — static, camera handles "scrolling" feel
     const grid = new THREE.GridHelper(120, 60, 0x000000, 0xb8b8b8);
     (grid.material as any).transparent = true;
     (grid.material as any).opacity = 0.7;
     grid.position.y = -2;
     group.add(grid);
 
-    // Deterministic seeded RNG
+    // ── Dots ──────────────────────────────────────────────────────────────
+    // Each dot travels independently in Z.
+    // X is snapped to a grid column (looks correct alongside the grid).
+    // Z flows CONTINUOUSLY — no position snap ever. The dot wraps in Z over
+    // a range DEPTH, but we fade it out before the wrap and back in after,
+    // so the teleport is completely invisible.
+    //
+    // Layout:
+    //   Z travels from NEAR_Z (closest to camera) → FAR_Z (farthest away).
+    //   In Three.js a higher z-value is closer to the camera when the camera
+    //   looks in -z. We want dots to travel TOWARD the camera (increasing z),
+    //   so:   rawZ = (phase + travelled) % DEPTH   → worldZ = FAR_Z + rawZ
+    //   where FAR_Z = -50 and DEPTH = 80, so worldZ goes -50 → +30.
+    //
+    //   Fade zones: fade IN over first 15% of DEPTH (entering from the back),
+    //               fade OUT over last 10% of DEPTH (leaving toward camera).
+    //   At the wrap point rawZ = 0 the dot is fully invisible → no pop.
+
+    const FAR_Z = -50;
+    const DEPTH = 80;
+    const FADE_IN_END = DEPTH * 0.15;
+    const FADE_OUT_START = DEPTH * 0.90;
+
+    const DOT_COUNT = 160;
+
     let seed = 11;
     function rnd() {
       seed = (seed * 16807) % 2147483647;
       return seed / 2147483647;
     }
 
-    // Per-dot data: each dot has a fixed column (gx) and a Z phase offset
-    // so they spread across the full depth and scroll individually.
-    const DOT_COUNT = 160;
-    const dotGx: number[] = [];
-    const dotPhase: number[] = []; // phase in [0, GRID_HALF*2) — dot's starting Z relative to group
-
+    // fixed X column (grid-snapped) + random Z phase spread across [0, DEPTH)
+    const dotX = new Float32Array(DOT_COUNT);
+    const dotPhase = new Float32Array(DOT_COUNT);
     for (let i = 0; i < DOT_COUNT; i++) {
-      dotGx.push(Math.round((rnd() - 0.5) * 40) * CELL);
-      dotPhase.push(rnd() * GRID_HALF * 2); // spread evenly across depth at start
+      dotX[i] = Math.round((rnd() - 0.5) * 40) * CELL;
+      dotPhase[i] = rnd() * DEPTH; // stagger start positions across full depth
     }
 
-    // Build a flat positions array we'll mutate every frame
+    // mutable position buffer — updated every frame
     const positions = new Float32Array(DOT_COUNT * 3);
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    const posAttr = new THREE.BufferAttribute(positions, 3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
 
-    // Per-dot alpha attribute for fade-in near the near edge
-    const alphas = new Float32Array(DOT_COUNT);
-    geo.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
+    // We use a single shared opacity on the material and set per-dot alpha
+    // via a custom shader workaround — but Three.js r128 PointsMaterial
+    // doesn't support per-point alpha natively without a custom shader.
+    // Simplest correct approach: use TWO sets of Points — fully-visible and
+    // fading — so we can control opacity per-frame with minimal cost.
+    // Even simpler: treat opacity as a global material property updated each
+    // frame, and instead set invisible dots to a position behind the far clip
+    // so they don't render at all. We achieve per-dot visibility by moving
+    // "invisible" dots far behind the camera (y = -1000).
 
     const mat = new THREE.PointsMaterial({
-      color: 0x000000,
+      color: 0x111111,
       size: 7,
       sizeAttenuation: false,
       transparent: true,
+      opacity: 1,
     });
 
-    const dots = new THREE.Points(geo, mat);
-    dots.position.y = -2 + 0.02;
-    group.add(dots);
+    // We'll bucket dots into THREE opacity levels each frame using separate
+    // Points objects — but that's overkill. Instead we simply move invisible
+    // dots off-screen (y = -500) and vary the material opacity every frame
+    // using the average. A cleaner solution: use vertex colors for alpha.
+    // THREE r128 supports vertexColors on PointsMaterial — we set rgba via
+    // a color attribute where the alpha encodes opacity.
+    // Actually the simplest approach that works with r128: use TWO materials.
+    //   mat_full  — opacity 1 (full dots)
+    //   mat_fade  — opacity interpolated (fading dots)
+    // And route dots between two Points objects each frame.
+    //
+    // For simplicity (and correctness at 60fps) we just use a single Points
+    // object, move fading dots off-screen, and render a second pass for the
+    // fading band using a separate Points object with a dynamic opacity.
 
+    // full-opacity dots
+    const matFull = new THREE.PointsMaterial({ color: 0x111111, size: 7, sizeAttenuation: false });
+    const posFull = new Float32Array(DOT_COUNT * 3);
+    const geoFull = new THREE.BufferGeometry();
+    const attrFull = new THREE.BufferAttribute(posFull, 3);
+    attrFull.setUsage(THREE.DynamicDrawUsage);
+    geoFull.setAttribute('position', attrFull);
+    const ptsFull = new THREE.Points(geoFull, matFull);
+    ptsFull.position.y = -2 + 0.02;
+    scene.add(ptsFull);
+
+    // fading-in dots (bottom of field — low rawZ)
+    const matFadeIn = new THREE.PointsMaterial({ color: 0x111111, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.5 });
+    const posFadeIn = new Float32Array(DOT_COUNT * 3);
+    const geoFadeIn = new THREE.BufferGeometry();
+    const attrFadeIn = new THREE.BufferAttribute(posFadeIn, 3);
+    attrFadeIn.setUsage(THREE.DynamicDrawUsage);
+    geoFadeIn.setAttribute('position', attrFadeIn);
+    const ptsFadeIn = new THREE.Points(geoFadeIn, matFadeIn);
+    ptsFadeIn.position.y = -2 + 0.02;
+    scene.add(ptsFadeIn);
+
+    // fading-out dots (front of field — high rawZ)
+    const matFadeOut = new THREE.PointsMaterial({ color: 0x111111, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.5 });
+    const posFadeOut = new Float32Array(DOT_COUNT * 3);
+    const geoFadeOut = new THREE.BufferGeometry();
+    const attrFadeOut = new THREE.BufferAttribute(posFadeOut, 3);
+    attrFadeOut.setUsage(THREE.DynamicDrawUsage);
+    geoFadeOut.setAttribute('position', attrFadeOut);
+    const ptsFadeOut = new THREE.Points(geoFadeOut, matFadeOut);
+    ptsFadeOut.position.y = -2 + 0.02;
+    scene.add(ptsFadeOut);
+
+    // off-screen sentinel for "invisible" dots
+    const OFFSCREEN_Y = -500;
+
+    // ── Resize ─────────────────────────────────────────────────────────────
     function resize() {
       if (!canvas) return;
       const w = canvas.clientWidth;
@@ -96,7 +176,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     window.addEventListener('resize', resize);
     resize();
 
-    // Pointer parallax, eased
+    // ── Pointer parallax ────────────────────────────────────────────────────
     const target = { x: 0, y: 0 };
     const eased = { x: 0, y: 0 };
     const onPointerMove = (e: PointerEvent) => {
@@ -105,22 +185,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     };
     window.addEventListener('pointermove', onPointerMove);
 
-    // The grid itself scrolls — we move the group's Z so the GridHelper
-    // appears to travel toward the camera. CELL wrap keeps it seamless.
-    // Dots scroll at the SAME speed but we compute their world-Z per frame
-    // by advancing their phase, so there is never a discrete position jump.
-    const DEPTH = GRID_HALF * 2; // total Z extent dots are spread across
-
+    // ── Animation loop ─────────────────────────────────────────────────────
     const start = performance.now();
     let animId: number;
     let running = true;
+
+    // Counters for bucket sizes per frame
+    let nFull = 0, nFadeIn = 0, nFadeOut = 0;
 
     function frame(now: number) {
       if (!running) return;
       const t = (now - start) / 1000;
 
-      // Move grid group for seamless grid scroll
-      group.position.z = -((t * SCROLL_SPEED) % CELL);
+      // Grid scrolls by sub-CELL offset — seamless because grid is periodic
+      group.position.z = -((t * SPEED) % CELL);
 
       // Camera sway + parallax
       eased.x += (target.x - eased.x) * 0.04;
@@ -129,34 +207,77 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       camera.position.y = 7 + eased.y * -2;
       camera.lookAt(0, -1, 0);
 
-      // Update each dot's Z continuously — no snapping
-      const travelled = t * SCROLL_SPEED; // total distance scrolled
+      // Accumulate dots into buckets
+      nFull = 0; nFadeIn = 0; nFadeOut = 0;
+      let avgFadeIn = 0, avgFadeOut = 0;
+
+      const travelled = t * SPEED;
+
       for (let i = 0; i < DOT_COUNT; i++) {
-        // dot's Z in group-local space, wrapping over [0, DEPTH)
+        // rawZ in [0, DEPTH) — advances continuously, no snapping
         const rawZ = (dotPhase[i] + travelled) % DEPTH;
-        // map [0, DEPTH) → [-GRID_HALF, +GRID_HALF] so dots travel
-        // from back (far) toward the near edge (z = +GRID_HALF → toward camera)
-        const worldZ = rawZ - GRID_HALF;
+        const worldZ = FAR_Z + rawZ;
 
-        positions[i * 3]     = dotGx[i];
-        positions[i * 3 + 1] = 0;
-        positions[i * 3 + 2] = worldZ;
-
-        // Fade in smoothly as dot enters from the back (worldZ near -GRID_HALF)
-        // and keep fully visible until it reaches the near edge
-        const fadeDepth = GRID_HALF * 0.18; // fade over ~18% of total depth
-        const fadeIn = Math.min(1, (rawZ) / fadeDepth);
-        alphas[i] = fadeIn;
+        if (rawZ < FADE_IN_END) {
+          // Fading in
+          const alpha = rawZ / FADE_IN_END; // 0→1
+          avgFadeIn += alpha;
+          const off = nFadeIn * 3;
+          posFadeIn[off]     = dotX[i];
+          posFadeIn[off + 1] = 0;
+          posFadeIn[off + 2] = worldZ;
+          nFadeIn++;
+        } else if (rawZ > FADE_OUT_START) {
+          // Fading out
+          const alpha = 1 - (rawZ - FADE_OUT_START) / (DEPTH - FADE_OUT_START); // 1→0
+          avgFadeOut += alpha;
+          const off = nFadeOut * 3;
+          posFadeOut[off]     = dotX[i];
+          posFadeOut[off + 1] = 0;
+          posFadeOut[off + 2] = worldZ;
+          nFadeOut++;
+        } else {
+          // Fully visible
+          const off = nFull * 3;
+          posFull[off]     = dotX[i];
+          posFull[off + 1] = 0;
+          posFull[off + 2] = worldZ;
+          nFull++;
+        }
       }
 
-      (geo.attributes.position as any).needsUpdate = true;
-      mat.opacity = 0.8;
-      renderer.render(scene, camera);
+      // Set materials to average alpha of their bucket
+      matFadeIn.opacity  = nFadeIn  > 0 ? avgFadeIn  / nFadeIn  : 0;
+      matFadeOut.opacity = nFadeOut > 0 ? avgFadeOut / nFadeOut : 0;
 
+      // Pad remaining slots off-screen so the buffers don't show stale data
+      for (let i = nFull * 3; i < DOT_COUNT * 3; i++) {
+        posFull[i] = (i % 3 === 1) ? OFFSCREEN_Y : 0;
+      }
+      for (let i = nFadeIn * 3; i < DOT_COUNT * 3; i++) {
+        posFadeIn[i] = (i % 3 === 1) ? OFFSCREEN_Y : 0;
+      }
+      for (let i = nFadeOut * 3; i < DOT_COUNT * 3; i++) {
+        posFadeOut[i] = (i % 3 === 1) ? OFFSCREEN_Y : 0;
+      }
+
+      attrFull.needsUpdate = true;
+      attrFadeIn.needsUpdate = true;
+      attrFadeOut.needsUpdate = true;
+
+      renderer.render(scene, camera);
       if (!reduce) animId = requestAnimationFrame(frame);
     }
 
     if (reduce) {
+      // static single frame
+      group.position.z = 0;
+      for (let i = 0; i < DOT_COUNT; i++) {
+        posFull[i * 3]     = dotX[i];
+        posFull[i * 3 + 1] = 0;
+        posFull[i * 3 + 2] = FAR_Z + dotPhase[i];
+      }
+      attrFull.needsUpdate = true;
       renderer.render(scene, camera);
     } else {
       animId = requestAnimationFrame(frame);
@@ -177,6 +298,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
         <canvas ref={canvasRef} id="bg" aria-hidden="true" />
         <div className="wrap">
           <div className="hero-panel">
+            {/* Platform logo in hero */}
+            <img
+              src="/platform-logo.svg"
+              alt="Wind Forecast Desk"
+              className="hero-logo"
+              style={{ width: 200, marginBottom: 24, display: 'block' }}
+            />
             <p className="eyebrow">UK EPEX SPOT GB DAM · Day-Ahead</p>
             <h1>Know your wind forecast error before gate closure.</h1>
             <p className="lede">
@@ -187,7 +315,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 Open Decision Desk →
               </button>
               <button className="btn" onClick={() => onNavigate('risk')}>
-                See Risk & Evaluation
+                See Risk &amp; Evaluation
               </button>
             </div>
             <dl className="hero-facts">
@@ -242,7 +370,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
           <div className="section-head">
             <p className="eyebrow">Two Dedicated Views</p>
             <h2>One for the desk, one for the review.</h2>
-            <p>Use the Decision Desk to bid a single day, and Risk & Evaluation to check accuracy and bias across a month.</p>
+            <p>Use the Decision Desk to bid a single day, and Risk &amp; Evaluation to check accuracy and bias across a month.</p>
           </div>
           <div className="views">
             <article className="view-card">

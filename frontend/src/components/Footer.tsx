@@ -27,7 +27,10 @@ export const Footer: React.FC<FooterProps> = ({ pingMs, onNavigate }) => {
         <div className="footer-strip">
           {/* Column 1: Brand & Purpose */}
           <div className="fcell">
-            <h5>GridBricks // WindForecast OS</h5>
+            <h5 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img src="/platform-mark.svg" alt="" aria-hidden="true" style={{ width: 22, height: 22 }} />
+              GridBricks // WindForecast OS
+            </h5>
             <p>Day-ahead wind forecast error for UK power trading, risk evaluation, and dispatch optimization.</p>
           </div>
 
