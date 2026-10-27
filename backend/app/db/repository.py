@@ -1,11 +1,12 @@
 import sqlite3
 from typing import List, Dict, Any, Optional
 from pathlib import Path
-from app.db.database import get_db
+from app.db.database import get_db, init_db
 
 class Repository:
     def __init__(self, db_path: Optional[Path | str] = None):
         self.db_path = db_path
+        init_db(self.db_path)
 
     def insert_actuals_bulk(self, records: List[Dict[str, Any]]) -> int:
         """Bulk insert actual generation records, ignoring duplicates."""
