@@ -308,7 +308,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <p className="eyebrow">UK EPEX SPOT GB DAM · Day-Ahead</p>
             <h1>Know your wind forecast error before gate closure.</h1>
             <p className="lede">
-              GridBricks compares the wind forecast with metered generation for every settlement period, so traders and dispatch teams see their exposure before bids close.
+              Wind Forecast Desk compares the wind forecast with metered generation for every settlement period, so traders and dispatch teams see their exposure before bids close.
             </p>
             <div className="cta-row">
               <button className="btn solid" onClick={() => onNavigate('desk')}>

@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 
 # Silence verbose loggers during benchmark
 logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("gridbricks.engine").setLevel(logging.WARNING)
+logging.getLogger("windforecast.engine").setLevel(logging.WARNING)
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -21,7 +21,7 @@ from app.services.metrics import MetricsCalculator
 
 def run_benchmark(num_requests: int = 100):
     print(f"\n=======================================================")
-    print(f" GridBricks Engine: High-Performance Latency Benchmark ")
+    print(f" Wind Forecast Desk Engine: High-Performance Latency Benchmark ")
     print(f"=======================================================")
     
     init_db()

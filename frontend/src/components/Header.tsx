@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
           style={{ textDecoration: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
         >
           <img src="/platform-mark.svg" alt="" aria-hidden="true" style={{ width: 28, height: 28 }} />
-          GridBricks <span>// WindForecast OS</span>
+          Wind Forecast Desk <span>// Day-Ahead</span>
         </a>
         <div className="tabs" role="tablist">
           <button

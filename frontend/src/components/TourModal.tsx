@@ -31,7 +31,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose }) => {
         {/* Step Contents */}
         {step === 1 && (
           <div>
-            <h3 style={{ margin: '0 0 8px', fontSize: 16 }}>Welcome to GridBricks WindForecast OS</h3>
+            <h3 style={{ margin: '0 0 8px', fontSize: 16 }}>Welcome to Wind Forecast Desk</h3>
             <p style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.5 }}>
               Decision-support intelligence for UK electricity utilities trading in the Day-Ahead wholesale market.
             </p>

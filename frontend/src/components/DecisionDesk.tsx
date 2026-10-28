@@ -169,7 +169,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
     if (!periods.length) return;
     let content = '';
     let mime = '';
-    let filename = `GridBricks_Wind_${deliveryDate}_Gate${activeGate}h.${type}`;
+    let filename = `WindForecast_${deliveryDate}_Gate${activeGate}h.${type}`;
 
     if (type === 'csv') {
       const header = 'Period,StartTime,Actual_MW,Forecast_MW,Error_MW,PublishTime\n';

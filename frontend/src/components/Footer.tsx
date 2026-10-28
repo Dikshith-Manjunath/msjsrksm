@@ -29,7 +29,7 @@ export const Footer: React.FC<FooterProps> = ({ pingMs, onNavigate }) => {
           <div className="fcell">
             <h5 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <img src="/platform-mark.svg" alt="" aria-hidden="true" style={{ width: 22, height: 22 }} />
-              GridBricks // WindForecast OS
+              Wind Forecast Desk
             </h5>
             <p>Day-ahead wind forecast error for UK power trading, risk evaluation, and dispatch optimization.</p>
           </div>
@@ -109,7 +109,7 @@ export const Footer: React.FC<FooterProps> = ({ pingMs, onNavigate }) => {
 
         {/* Legal & Attribution Strip */}
         <div className="legal">
-          <span>© 2026 GridBricks // Next-Gen Power Systems</span>
+          <span>© 2026 Wind Forecast Desk // Day-Ahead Power Analytics</span>
           <span>Official UK National Generation & Forecast Feed (Elexon BMRS)</span>
         </div>
       </div>

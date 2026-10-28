@@ -13,7 +13,7 @@ class ElexonClient:
         self.timeout = timeout
         self.headers = {
             "Accept": "application/json",
-            "User-Agent": "GridBricks-WindEngine/0.1.0"
+            "User-Agent": "WindForecastDesk-Engine/0.1.0"
         }
 
     async def fetch_fuelhh_wind_stream(

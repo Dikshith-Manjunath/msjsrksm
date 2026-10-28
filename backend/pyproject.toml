@@ -1,5 +1,5 @@
 [project]
-name = "gridbricks-wind-engine"
+name = "wind-forecast-desk-engine"
 version = "0.1.0"
 description = "High-performance UK Wind Power Day-Ahead Forecasting and Evaluation Platform"
 readme = "README.md"

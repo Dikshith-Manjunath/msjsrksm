@@ -13,7 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
-logger = logging.getLogger("gridbricks.engine")
+logger = logging.getLogger("windforecast.engine")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,7 +29,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     description="""
-## GridBricks UK Wind Forecasting & Day-Ahead Evaluation Engine
+## Wind Forecast Desk: UK Wind Forecasting & Day-Ahead Evaluation Engine
 
 A high-performance trading support system for UK energy utilities participating in the wholesale Day-Ahead electricity market.
 

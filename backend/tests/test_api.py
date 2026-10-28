@@ -19,7 +19,7 @@ def test_health_endpoints(client):
     
     res2 = client.get("/api/v1/health")
     assert res2.status_code == 200
-    assert res2.json()["service"] == "GridBricks UK Wind Forecasting & Trading Platform"
+    assert res2.json()["service"] == "Wind Forecast Desk: UK Wind Forecasting & Trading Platform"
 
 def test_dates_endpoint(client):
     res = client.get("/api/v1/dates")
