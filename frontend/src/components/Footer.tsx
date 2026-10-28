@@ -109,7 +109,7 @@ export const Footer: React.FC<FooterProps> = ({ pingMs, onNavigate }) => {
 
         {/* Legal & Attribution Strip */}
         <div className="legal">
-          <span>© 2026 Wind Forecast Desk // Day-Ahead Power Analytics</span>
+          <span>© 2026 Wind Forecast Desk</span>
           <span>Official UK National Generation & Forecast Feed (Elexon BMRS)</span>
         </div>
       </div>
