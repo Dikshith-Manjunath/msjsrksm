@@ -66,7 +66,7 @@ export const SensitivityModal: React.FC<SensitivityModalProps> = ({ isOpen, onCl
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" style={{ maxWidth: 760 }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">⚡ Gate-Closure Cutoff Sensitivity Matrix (January 2026)</h2>
+          <h2 className="modal-title">Gate-Closure Cutoff Sensitivity Matrix (January 2026)</h2>
           <button className="modal-close" onClick={onClose}>
             ✕ Close
           </button>

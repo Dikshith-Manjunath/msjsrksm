@@ -332,7 +332,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                   background: isCalendarOpen ? 'var(--surface)' : 'var(--bg)',
                 }}
               >
-                <span>📅 {deliveryDate}</span>
+                <span>{deliveryDate}</span>
                 <span style={{ fontSize: 9, opacity: 0.6 }}>{isCalendarOpen ? '▲' : '▼'}</span>
               </button>
 

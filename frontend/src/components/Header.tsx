@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
           title="Compare Cutoff Sensitivity (07:00 vs 09:00 vs 11:00 vs 14:00 vs 18:00)"
           style={{ fontSize: 11, padding: '4px 8px' }}
         >
-          ⚡ Sensitivity
+          Sensitivity
         </button>
 
         <button
@@ -120,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({
           title="Sync latest live data from Elexon BMRS API"
           style={{ fontSize: 11, padding: '4px 8px' }}
         >
-          {isSyncing ? 'Syncing...' : '🔄 Sync'}
+          {isSyncing ? 'Syncing...' : 'Sync'}
         </button>
       </div>
     </header>
