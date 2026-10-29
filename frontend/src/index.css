@@ -694,6 +694,134 @@ h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -0.02e
 @media (max-width: 520px) {
   .nav .btn { margin-left: 0; }
 }
+/* Base UI Slider Styling (Monochrome & Black theme) */
+.base-slider-root {
+  position: relative;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+  width: 100%;
+  cursor: pointer;
+}
+
+.base-slider-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding-block: 8px;
+}
+
+.base-slider-track {
+  position: relative;
+  height: 4px;
+  width: 100%;
+  flex-grow: 1;
+  background: var(--line);
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.base-slider-indicator {
+  position: absolute;
+  height: 100%;
+  background: var(--fg);
+  border-radius: 9999px;
+}
+
+.base-slider-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--fg);
+  border: 2px solid var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  outline: none;
+  cursor: grab;
+}
+
+.base-slider-thumb:active {
+  cursor: grabbing;
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.base-slider-thumb:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+/* Perspective 3D utility for Comet Card */
+.perspective-distant {
+  perspective: 1200px;
+}
+
+.transform-3d {
+  transform-style: preserve-3d;
+}
+
+/* Comet cards container on landing page */
+.comet-views-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 28px;
+  margin-top: 24px;
+}
+
+.comet-card-inner {
+  height: 100%;
+  background: var(--bg);
+  border: 1px solid var(--fg);
+  border-radius: 16px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+.comet-card-inner .tagline {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  margin: 0 0 12px;
+}
+
+.comet-card-inner h3 {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+
+.comet-card-inner ul {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  flex-grow: 1;
+}
+
+.comet-card-inner li {
+  padding: 11px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.comet-card-inner li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { CometCard } from '@/components/ui/comet-card';
 
 interface LandingPageProps {
   onNavigate: (tab: 'desk' | 'risk') => void;
@@ -364,7 +365,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* Two Views Section */}
+      {/* Two Dedicated Views (Comet Card 3D Perspective Experience) */}
       <section className="block" id="views">
         <div className="wrap">
           <div className="section-head">
@@ -372,34 +373,68 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <h2>One for the desk, one for the review.</h2>
             <p>Use the Decision Desk to bid a single day, and Risk &amp; Evaluation to check accuracy and bias across a month.</p>
           </div>
-          <div className="views">
-            <article className="view-card">
-              <p className="tagline">Operational · Daily Trading</p>
-              <h3>Decision Desk</h3>
-              <ul>
-                <li>Pick any delivery day in January 2026 and gate-closure cutoff.</li>
-                <li>Actual vs forecast overlay, with hatched over-forecast areas.</li>
-                <li>Hedging suggestions and cash-out cost risk estimators.</li>
-                <li>Export the day to clipboard or download as CSV / JSON.</li>
-              </ul>
-              <button className="btn solid" onClick={() => onNavigate('desk')} style={{ marginTop: 10 }}>
-                Launch Decision Desk →
-              </button>
-            </article>
+          <div className="comet-views-container">
+            {/* Operational Decision Desk Comet Card */}
+            <CometCard rotateDepth={14} translateDepth={18}>
+              <article className="comet-card-inner">
+                <div>
+                  <p className="tagline">Operational · Daily Trading</p>
+                  <h3>Decision Desk</h3>
+                  <ul>
+                    <li>Pick any delivery day in January 2026 and gate-closure cutoff.</li>
+                    <li>Actual vs forecast overlay, with hatched over-forecast areas.</li>
+                    <li>Hedging suggestions and cash-out cost risk estimators.</li>
+                    <li>Export the day to clipboard or download as CSV / JSON.</li>
+                  </ul>
+                </div>
+                <button
+                  className="btn solid"
+                  onClick={() => onNavigate('desk')}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    fontSize: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  Launch Decision Desk →
+                </button>
+              </article>
+            </CometCard>
 
-            <article className="view-card">
-              <p className="tagline">Analytical · Multi-Day Risk</p>
-              <h3>Risk &amp; Evaluation</h3>
-              <ul>
-                <li>Scorecard: WAPE (%), correlation R², bias ratio, and net GWh.</li>
-                <li>250 MW error distribution histogram with Gaussian fit and tail risk check.</li>
-                <li>24-hour error box plot to identify weak hours.</li>
-                <li>Filter by custom week, peak (07–19 GMT), or off-peak hours.</li>
-              </ul>
-              <button className="btn" onClick={() => onNavigate('risk')} style={{ marginTop: 10 }}>
-                Launch Risk View →
-              </button>
-            </article>
+            {/* Analytical Risk & Evaluation Comet Card */}
+            <CometCard rotateDepth={14} translateDepth={18}>
+              <article className="comet-card-inner">
+                <div>
+                  <p className="tagline">Analytical · Multi-Day Risk</p>
+                  <h3>Risk &amp; Evaluation</h3>
+                  <ul>
+                    <li>Scorecard: WAPE (%), correlation R², bias ratio, and net GWh.</li>
+                    <li>250 MW error distribution histogram with Gaussian fit and tail risk check.</li>
+                    <li>24-hour error box plot to identify weak hours.</li>
+                    <li>Filter by custom week, peak (07–19 GMT), or off-peak hours.</li>
+                  </ul>
+                </div>
+                <button
+                  className="btn"
+                  onClick={() => onNavigate('risk')}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    fontSize: 14,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  Launch Risk View →
+                </button>
+              </article>
+            </CometCard>
           </div>
         </div>
       </section>

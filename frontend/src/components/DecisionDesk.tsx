@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AlignedPeriod, DayAheadForecastResponse } from '../types';
+import { Slider } from '@/components/ui/slider';
 
 interface DecisionDeskProps {
   data: DayAheadForecastResponse | null;
@@ -284,25 +285,26 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
         </div>
 
         {/* Gate Closure Cutoff Slider */}
-        <div className="gate" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="gate" style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 200 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
             <span className="ctl-label">Gate Closure Cutoff (D-1)</span>
             <span className="gate-value" style={{ fontFamily: 'var(--mono)', fontWeight: 600 }}>
               {String(activeGate).padStart(2, '0')}:00 GMT {activeGate === 11 ? '(standard)' : ''}
             </span>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={4}
-            step={1}
-            value={[7, 9, 11, 14, 18].indexOf(activeGate) >= 0 ? [7, 9, 11, 14, 18].indexOf(activeGate) : 2}
-            onChange={(e) => {
-              const gates = [7, 9, 11, 14, 18];
-              onChangeGateClosure(gates[parseInt(e.target.value)]);
-            }}
-            style={{ width: 170, cursor: 'pointer' }}
-          />
+          <div style={{ width: 190, paddingTop: 2 }}>
+            <Slider
+              min={0}
+              max={4}
+              step={1}
+              value={[7, 9, 11, 14, 18].indexOf(activeGate) >= 0 ? [7, 9, 11, 14, 18].indexOf(activeGate) : 2}
+              onValueChange={(val) => {
+                const idx = Array.isArray(val) ? val[0] : val;
+                const gates = [7, 9, 11, 14, 18];
+                onChangeGateClosure(gates[idx]);
+              }}
+            />
+          </div>
         </div>
 
         {/* Resolution Toggle */}
@@ -498,20 +500,21 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
           {isPlaying ? '❚❚ Pause' : '▶ Simulate Gate Closure'}
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 200 }}>
-          <span style={{ fontSize: 12, color: 'var(--muted)' }}>Scrubber:</span>
-          <input
-            type="range"
-            min={0}
-            max={3}
-            step={1}
-            value={previewGate !== null ? simSteps.indexOf(previewGate) : simSteps.indexOf(11)}
-            onChange={(e) => {
-              if (isPlaying) togglePlay();
-              setPreviewGate(simSteps[parseInt(e.target.value)]);
-            }}
-            style={{ flex: 1, cursor: 'pointer' }}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 200 }}>
+          <span style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>Scrubber:</span>
+          <div style={{ flex: 1, minWidth: 120 }}>
+            <Slider
+              min={0}
+              max={3}
+              step={1}
+              value={previewGate !== null ? simSteps.indexOf(previewGate) : simSteps.indexOf(11)}
+              onValueChange={(val) => {
+                if (isPlaying) togglePlay();
+                const idx = Array.isArray(val) ? val[0] : val;
+                setPreviewGate(simSteps[idx]);
+              }}
+            />
+          </div>
         </div>
 
         <div style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
