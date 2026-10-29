@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AlignedPeriod, DayAheadForecastResponse } from '../types';
 import { Slider } from '@/components/ui/slider';
+import { Calendar } from '@/components/ui/calendar';
 
 interface DecisionDeskProps {
   data: DayAheadForecastResponse | null;
@@ -72,6 +73,23 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
 
   // Status message for export
   const [copyMsg, setCopyMsg] = useState<string | null>(null);
+
+  // Calendar popover open state
+  const [isCalendarOpen, setIsCalendarOpen] = useState<boolean>(false);
+  const calendarRef = useRef<HTMLDivElement | null>(null);
+
+  // Close calendar popover on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+        setIsCalendarOpen(false);
+      }
+    };
+    if (isCalendarOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isCalendarOpen]);
 
   // Insights toggle on narrow screens
   const [showInsights, setShowInsights] = useState<boolean>(true);
@@ -282,10 +300,10 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
 
       {/* Control Ribbon */}
       <div className="ctl" style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-        {/* Delivery Day Picker */}
+        {/* Delivery Day Picker with React DayPicker Popover */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="ctl-label">Delivery Day</span>
-          <div className="date-row" style={{ display: 'flex', gap: 4, alignItems: 'stretch' }}>
+          <div className="date-row" style={{ display: 'flex', gap: 4, alignItems: 'stretch', position: 'relative' }}>
             <button
               className="btn"
               onClick={handlePrevDay}
@@ -295,18 +313,94 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
             >
               ← Prev
             </button>
-            <select
-              value={deliveryDate}
-              onChange={(e) => onChangeDate(e.target.value)}
-              className="btn"
-              style={{ fontWeight: 600, height: 36, padding: '0 12px', display: 'inline-flex', alignItems: 'center' }}
-            >
-              {allDates.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
+
+            {/* Interactive Calendar Button */}
+            <div ref={calendarRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setIsCalendarOpen(!isCalendarOpen)}
+                title="Open Calendar Date Picker"
+                style={{
+                  fontWeight: 600,
+                  height: 36,
+                  padding: '0 12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontFamily: 'var(--mono)',
+                  background: isCalendarOpen ? 'var(--surface)' : 'var(--bg)',
+                }}
+              >
+                <span>📅 {deliveryDate}</span>
+                <span style={{ fontSize: 9, opacity: 0.6 }}>{isCalendarOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {/* DayPicker Floating Popover */}
+              {isCalendarOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    zIndex: 200,
+                    background: '#FFFFFF',
+                    border: '1px solid #000000',
+                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
+                    borderRadius: 4,
+                  }}
+                >
+                  <Calendar
+                    mode="single"
+                    selected={new Date(`${deliveryDate}T12:00:00`)}
+                    onSelect={(d) => {
+                      if (d) {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        const dateStr = `${y}-${m}-${day}`;
+                        // Only select if it is one of the valid dates
+                        if (allDates.includes(dateStr)) {
+                          onChangeDate(dateStr);
+                          setIsCalendarOpen(false);
+                        }
+                      }
+                    }}
+                    defaultMonth={new Date(2026, 0, 15)}
+                    disabled={(date) => {
+                      const y = date.getFullYear();
+                      const m = String(date.getMonth() + 1).padStart(2, '0');
+                      const day = String(date.getDate()).padStart(2, '0');
+                      const str = `${y}-${m}-${day}`;
+                      // Grey out all dates that don't have available data
+                      return !allDates.includes(str);
+                    }}
+                  />
+                  <div
+                    style={{
+                      borderTop: '1px solid var(--line)',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontSize: 11,
+                      fontFamily: 'var(--mono)',
+                      color: 'var(--dim)',
+                    }}
+                  >
+                    <span>January 2026 Dataset</span>
+                    <button
+                      className="btn ghost"
+                      style={{ fontSize: 11, padding: 0 }}
+                      onClick={() => setIsCalendarOpen(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               className="btn"
               onClick={handleNextDay}

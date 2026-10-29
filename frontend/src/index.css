@@ -756,6 +756,94 @@ h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -0.02e
   outline-offset: 2px;
 }
 
+/* React DayPicker Calendar Styling (Monochrome high-contrast design) */
+.wind-calendar-wrapper {
+  background: #FFFFFF;
+  color: #000000;
+  font-family: var(--sans);
+  padding: 10px;
+}
+
+.wind-calendar-root {
+  --rdp-accent-color: #000000;
+  --rdp-accent-background-color: #000000;
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-height: 32px;
+  --rdp-day_button-width: 32px;
+  --rdp-day_button-border-radius: 4px;
+  --rdp-selected-border: 1px solid #000000;
+}
+
+.wind-calendar-caption-label {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wind-calendar-nav-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: #000000;
+  border-radius: 2px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wind-calendar-nav-btn:hover {
+  background: var(--surface);
+}
+
+.wind-calendar-head-cell {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dim);
+  text-transform: uppercase;
+  padding: 4px 0;
+}
+
+.wind-calendar-day-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.1s ease;
+}
+
+.wind-calendar-day-btn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+.wind-calendar-selected .wind-calendar-day-btn {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  font-weight: 700;
+}
+
+.wind-calendar-today:not(.wind-calendar-selected) .wind-calendar-day-btn {
+  border-bottom: 2px solid #000000;
+  font-weight: 600;
+}
+
+.wind-calendar-disabled .wind-calendar-day-btn,
+.wind-calendar-outside .wind-calendar-day-btn {
+  color: #C0C0C0 !important;
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
 /* Perspective 3D utility for Comet Card */
 .perspective-distant {
   perspective: 1200px;
