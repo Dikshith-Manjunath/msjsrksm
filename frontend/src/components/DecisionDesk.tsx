@@ -37,6 +37,36 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
   // Cashout price setting (£/MWh)
   const [cashoutPrice, setCashoutPrice] = useState<number>(75);
 
+  // Smooth sliding positions (continuous float 0..100)
+  const [continuousGateVal, setContinuousGateVal] = useState<number>(
+    () => {
+      const idx = [7, 9, 11, 14, 18].indexOf(gateClosureHour);
+      return idx >= 0 ? (idx / 4) * 100 : 50;
+    }
+  );
+  const [continuousScrubVal, setContinuousScrubVal] = useState<number>(
+    () => {
+      const idx = [6, 9, 11, 15].indexOf(previewGate !== null ? previewGate : 11);
+      return idx >= 0 ? (idx / 3) * 100 : 66.6;
+    }
+  );
+
+  // Keep continuous positions synced when external props change
+  useEffect(() => {
+    const idx = [7, 9, 11, 14, 18].indexOf(gateClosureHour);
+    if (idx >= 0) {
+      setContinuousGateVal((idx / 4) * 100);
+    }
+  }, [gateClosureHour]);
+
+  useEffect(() => {
+    const target = previewGate !== null ? previewGate : 11;
+    const idx = [6, 9, 11, 15].indexOf(target);
+    if (idx >= 0) {
+      setContinuousScrubVal((idx / 3) * 100);
+    }
+  }, [previewGate]);
+
   // Hover crosshair state for hero chart
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
@@ -255,15 +285,21 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
         {/* Delivery Day Picker */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span className="ctl-label">Delivery Day</span>
-          <div className="date-row" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <button className="btn" onClick={handlePrevDay} disabled={!canPrev} title="Previous Day">
+          <div className="date-row" style={{ display: 'flex', gap: 4, alignItems: 'stretch' }}>
+            <button
+              className="btn"
+              onClick={handlePrevDay}
+              disabled={!canPrev}
+              title="Previous Day"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 12px' }}
+            >
               ← Prev
             </button>
             <select
               value={deliveryDate}
               onChange={(e) => onChangeDate(e.target.value)}
               className="btn"
-              style={{ fontWeight: 600, padding: '5px 8px' }}
+              style={{ fontWeight: 600, height: 36, padding: '0 12px', display: 'inline-flex', alignItems: 'center' }}
             >
               {allDates.map((d) => (
                 <option key={d} value={d}>
@@ -271,13 +307,20 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 </option>
               ))}
             </select>
-            <button className="btn" onClick={handleNextDay} disabled={!canNext} title="Next Day">
+            <button
+              className="btn"
+              onClick={handleNextDay}
+              disabled={!canNext}
+              title="Next Day"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', height: 36, padding: '0 12px' }}
+            >
               Next →
             </button>
             <button
               className="btn ghost"
               onClick={() => onChangeDate('2026-01-15')}
               disabled={deliveryDate === '2026-01-15'}
+              style={{ height: 36, display: 'inline-flex', alignItems: 'center' }}
             >
               Today
             </button>
@@ -295,13 +338,25 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
           <div style={{ width: 190, paddingTop: 2 }}>
             <Slider
               min={0}
-              max={4}
-              step={1}
-              value={[7, 9, 11, 14, 18].indexOf(activeGate) >= 0 ? [7, 9, 11, 14, 18].indexOf(activeGate) : 2}
+              max={100}
+              step={0.5}
+              value={continuousGateVal}
               onValueChange={(val) => {
-                const idx = Array.isArray(val) ? val[0] : val;
+                const numeric = Array.isArray(val) ? val[0] : val;
+                setContinuousGateVal(numeric);
+                // Threshold-based responsive quantization across 5 gates: [7, 9, 11, 14, 18]
+                // Buckets centered at 0%, 25%, 50%, 75%, 100% (thresholds at 12.5%, 37.5%, 62.5%, 87.5%)
                 const gates = [7, 9, 11, 14, 18];
-                onChangeGateClosure(gates[idx]);
+                let chosenIdx = 0;
+                if (numeric >= 87.5) chosenIdx = 4;
+                else if (numeric >= 62.5) chosenIdx = 3;
+                else if (numeric >= 37.5) chosenIdx = 2;
+                else if (numeric >= 12.5) chosenIdx = 1;
+                else chosenIdx = 0;
+
+                if (gates[chosenIdx] !== activeGate) {
+                  onChangeGateClosure(gates[chosenIdx]);
+                }
               }}
             />
           </div>
@@ -505,13 +560,24 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
           <div style={{ flex: 1, minWidth: 120 }}>
             <Slider
               min={0}
-              max={3}
-              step={1}
-              value={previewGate !== null ? simSteps.indexOf(previewGate) : simSteps.indexOf(11)}
+              max={100}
+              step={0.5}
+              value={continuousScrubVal}
               onValueChange={(val) => {
                 if (isPlaying) togglePlay();
-                const idx = Array.isArray(val) ? val[0] : val;
-                setPreviewGate(simSteps[idx]);
+                const numeric = Array.isArray(val) ? val[0] : val;
+                setContinuousScrubVal(numeric);
+                // Threshold-based responsive quantization across 4 simSteps: [6, 9, 11, 15]
+                // Buckets centered at 0%, 33.3%, 66.6%, 100% (thresholds at 16.6%, 50%, 83.3%)
+                let chosenIdx = 0;
+                if (numeric >= 83.3) chosenIdx = 3;
+                else if (numeric >= 50.0) chosenIdx = 2;
+                else if (numeric >= 16.6) chosenIdx = 1;
+                else chosenIdx = 0;
+
+                if (simSteps[chosenIdx] !== previewGate) {
+                  setPreviewGate(simSteps[chosenIdx]);
+                }
               }}
             />
           </div>

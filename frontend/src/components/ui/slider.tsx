@@ -46,8 +46,8 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
         <SliderPrimitive.Control className="base-slider-control">
           <SliderPrimitive.Track className="base-slider-track">
             <SliderPrimitive.Indicator className="base-slider-indicator" />
-            <SliderPrimitive.Thumb className="base-slider-thumb" aria-label="Slider thumb" />
           </SliderPrimitive.Track>
+          <SliderPrimitive.Thumb className="base-slider-thumb" aria-label="Slider thumb" />
         </SliderPrimitive.Control>
       </SliderPrimitive.Root>
     );

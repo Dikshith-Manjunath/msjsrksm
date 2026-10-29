@@ -703,6 +703,7 @@ h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -0.02e
   touch-action: none;
   width: 100%;
   cursor: pointer;
+  height: 24px;
 }
 
 .base-slider-control {
@@ -710,7 +711,7 @@ h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -0.02e
   display: flex;
   align-items: center;
   width: 100%;
-  padding-block: 8px;
+  height: 24px;
 }
 
 .base-slider-track {
@@ -719,8 +720,8 @@ h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -0.02e
   width: 100%;
   flex-grow: 1;
   background: var(--line);
-  overflow: hidden;
   border-radius: 9999px;
+  overflow: hidden;
 }
 
 .base-slider-indicator {
@@ -731,24 +732,23 @@ h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 600; letter-spacing: -0.02e
 }
 
 .base-slider-thumb {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
   display: block;
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--fg);
-  border: 2px solid var(--bg);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  background: #000000;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
   outline: none;
   cursor: grab;
+  z-index: 10;
 }
 
 .base-slider-thumb:active {
   cursor: grabbing;
-  transform: translate(-50%, -50%) scale(1.15);
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .base-slider-thumb:focus-visible {
