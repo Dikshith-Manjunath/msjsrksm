@@ -25,7 +25,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose }) => {
 
         {/* Step Progress Bar */}
         <div style={{ height: 2, background: 'var(--line)', marginBottom: 16 }}>
-          <div style={{ height: 2, background: '#000', width: `${(step / totalSteps) * 100}%` }} />
+          <div style={{ height: 2, background: 'var(--fg)', width: `${(step / totalSteps) * 100}%` }} />
         </div>
 
         {/* Step Contents */}
@@ -75,7 +75,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose }) => {
             <p style={{ fontSize: 13, lineHeight: 1.5 }}>
               When a trader submits bids at <strong>11:00 GMT on Day D-1</strong>, using a forecast published at 16:00 GMT on D-1 or on Day D is a form of <em>lookahead bias</em> (data leakage).
             </p>
-            <p style={{ fontSize: 13, lineHeight: 1.5, background: 'var(--surface)', padding: 10, borderLeft: '3px solid #000' }}>
+            <p style={{ fontSize: 13, lineHeight: 1.5, background: 'var(--surface)', padding: 10, borderLeft: '3px solid var(--fg)' }}>
               Our temporal engine strictly filters out all forecasts where <code>publishTime &gt; Cutoff</code>, accurately reproducing historical trader decision states.
             </p>
           </div>
@@ -126,19 +126,19 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose }) => {
             </p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
               <div style={{ border: '1px solid var(--line)', padding: 10 }}>
-                <span style={{ display: 'inline-block', width: 20, height: 3, background: '#000', marginRight: 8 }} />
-                <strong>Actual Wind:</strong> Solid black curve
+                <span style={{ display: 'inline-block', width: 20, height: 3, background: 'var(--fg)', marginRight: 8 }} />
+                <strong>Actual Wind:</strong> Solid line
               </div>
               <div style={{ border: '1px solid var(--line)', padding: 10 }}>
-                <span style={{ display: 'inline-block', width: 20, height: 3, borderBottom: '2px dashed #666', marginRight: 8 }} />
-                <strong>Forecast Wind:</strong> Dashed grey curve
+                <span style={{ display: 'inline-block', width: 20, height: 3, borderBottom: '2px dashed var(--dim)', marginRight: 8 }} />
+                <strong>Forecast Wind:</strong> Dashed line
               </div>
               <div style={{ border: '1px solid var(--line)', padding: 10 }}>
-                <span style={{ display: 'inline-block', width: 14, height: 14, border: '1px solid #000', backgroundImage: 'repeating-linear-gradient(45deg, #000, #000 1px, transparent 1px, transparent 4px)', marginRight: 8 }} />
-                <strong>Over-forecast:</strong> Diagonal black hatching
+                <span style={{ display: 'inline-block', width: 14, height: 14, border: '1px solid var(--fg)', backgroundImage: 'repeating-linear-gradient(45deg, var(--fg), var(--fg) 1px, transparent 1px, transparent 4px)', marginRight: 8 }} />
+                <strong>Over-forecast:</strong> Diagonal hatching
               </div>
               <div style={{ border: '1px solid var(--line)', padding: 10 }}>
-                <span style={{ display: 'inline-block', width: 14, height: 14, background: '#8F8F8F', marginRight: 8 }} />
+                <span style={{ display: 'inline-block', width: 14, height: 14, background: 'var(--under-fill)', marginRight: 8 }} />
                 <strong>Under-forecast:</strong> Mid-grey solid fill
               </div>
             </div>
@@ -185,7 +185,7 @@ export const TourModal: React.FC<TourModalProps> = ({ isOpen, onClose }) => {
                 Next Step →
               </button>
             ) : (
-              <button className="btn" onClick={onClose} style={{ background: '#000', color: '#fff' }}>
+              <button className="btn solid" onClick={onClose}>
                 Open Decision Desk ✓
               </button>
             )}

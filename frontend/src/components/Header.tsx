@@ -2,14 +2,16 @@ import React from 'react';
 import { HealthStatus } from '../types';
 
 interface HeaderProps {
-  currentTab: 'landing' | 'desk' | 'risk';
-  onSelectTab: (tab: 'landing' | 'desk' | 'risk') => void;
+  currentTab: 'landing' | 'desk' | 'risk' | 'docs';
+  onSelectTab: (tab: 'landing' | 'desk' | 'risk' | 'docs') => void;
   health: HealthStatus | null;
   pingMs: number | null;
   onOpenTour: () => void;
   onOpenSensitivity: () => void;
   onTriggerSync: () => void;
   isSyncing: boolean;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,6 +23,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSensitivity,
   onTriggerSync,
   isSyncing,
+  theme,
+  onToggleTheme,
 }) => {
   return (
     <header className="topnav site-header" style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg)' }}>
@@ -34,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="brand"
           style={{ textDecoration: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          <img src="/platform-mark.svg" alt="" aria-hidden="true" style={{ width: 28, height: 28 }} />
+          <img src="/platform-mark.svg" alt="" aria-hidden="true" style={{ width: 28, height: 28 }} className="brand-mark" />
           Wind Forecast Desk
         </a>
         <div className="tabs" role="tablist">
@@ -65,13 +69,22 @@ export const Header: React.FC<HeaderProps> = ({
           >
             Risk & Evaluation
           </button>
+          <button
+            className="tab"
+            role="tab"
+            aria-selected={currentTab === 'docs'}
+            aria-current={currentTab === 'docs' ? 'page' : undefined}
+            onClick={() => onSelectTab('docs')}
+          >
+            Documentation
+          </button>
         </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <div className="health">
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-            <span className="pulse-dot" style={{ background: health?.status === 'online' ? '#000' : '#888' }} />
+            <span className="pulse-dot" style={{ background: health?.status === 'online' ? 'var(--fg)' : 'var(--dim)' }} />
             Latency {pingMs !== null ? `${pingMs} ms` : '...'}
           </span>
           <span className="sep">|</span>
@@ -79,10 +92,35 @@ export const Header: React.FC<HeaderProps> = ({
           {health?.database.is_seeded && (
             <>
               <span className="sep">|</span>
-              <span style={{ color: '#000', fontWeight: 600 }}>1,488 SPs</span>
+              <span style={{ color: 'var(--fg)', fontWeight: 600 }}>1,488 SPs</span>
             </>
           )}
         </div>
+
+        <button
+          className="btn ghost"
+          onClick={onToggleTheme}
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{
+            fontSize: 11,
+            padding: '4px 8px',
+            fontFamily: 'var(--mono)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: 'var(--fg)',
+              display: 'inline-block',
+            }}
+          />
+          {theme === 'dark' ? 'Dark' : 'Light'}
+        </button>
 
         <button
           className="btn ghost"
@@ -103,14 +141,14 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <a
-          href="/docs"
+          href="http://127.0.0.1:8000/docs"
           target="_blank"
           rel="noreferrer"
           className="btn ghost"
-          title="View FastAPI Swagger OpenAPI Documentation"
+          title="Open FastAPI Interactive Swagger OpenAPI Specifications"
           style={{ fontSize: 11, padding: '4px 8px', textDecoration: 'none' }}
         >
-          API Docs ↗
+          Swagger ↗
         </a>
 
         <button

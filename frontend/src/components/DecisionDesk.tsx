@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { AlignedPeriod, DayAheadForecastResponse } from '../types';
 import { Slider } from '@/components/ui/slider';
 import { Calendar } from '@/components/ui/calendar';
+import { ForecastEvolutionModal } from './ForecastEvolutionModal';
+import { ThermalDispatchSheet } from './ThermalDispatchSheet';
 
 interface DecisionDeskProps {
   data: DayAheadForecastResponse | null;
@@ -37,6 +39,10 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
 
   // Cashout price setting (£/MWh)
   const [cashoutPrice, setCashoutPrice] = useState<number>(75);
+
+  // Advanced Visualization States
+  const [showUncertaintyBand, setShowUncertaintyBand] = useState<boolean>(true);
+  const [selectedRevisionSP, setSelectedRevisionSP] = useState<AlignedPeriod | null>(null);
 
   // Smooth sliding positions (continuous float 0..100)
   const [continuousGateVal, setContinuousGateVal] = useState<number>(
@@ -344,9 +350,9 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     top: 'calc(100% + 6px)',
                     left: 0,
                     zIndex: 200,
-                    background: '#FFFFFF',
-                    border: '1px solid #000000',
-                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.15)',
+                    background: 'var(--bg)',
+                    border: '1px solid var(--fg)',
+                    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
                     borderRadius: 4,
                   }}
                 >
@@ -417,6 +423,49 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
               style={{ height: 36, display: 'inline-flex', alignItems: 'center' }}
             >
               Today
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Scenario Jumps */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span className="ctl-label">Benchmark Scenarios</span>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button
+              type="button"
+              className={`btn ${deliveryDate === '2026-01-27' ? 'solid' : 'ghost'}`}
+              onClick={() => onChangeDate('2026-01-27')}
+              title="Storm Surge: Peak wind 17.6 GW, Avg 16.4 GW"
+              style={{ fontSize: 11, padding: '0 8px', height: 36, display: 'inline-flex', alignItems: 'center' }}
+            >
+              Storm Surge (27 Jan)
+            </button>
+            <button
+              type="button"
+              className={`btn ${deliveryDate === '2026-01-08' ? 'solid' : 'ghost'}`}
+              onClick={() => onChangeDate('2026-01-08')}
+              title="Calm Lull: Minimum wind 1.7 GW, Avg 4.5 GW"
+              style={{ fontSize: 11, padding: '0 8px', height: 36, display: 'inline-flex', alignItems: 'center' }}
+            >
+              Calm Lull (08 Jan)
+            </button>
+            <button
+              type="button"
+              className={`btn ${deliveryDate === '2026-01-28' ? 'solid' : 'ghost'}`}
+              onClick={() => onChangeDate('2026-01-28')}
+              title="Max Imbalance: 5.3 GW MAE miss (+116 GWh deficit, high CCGT exposure)"
+              style={{ fontSize: 11, padding: '0 8px', height: 36, display: 'inline-flex', alignItems: 'center' }}
+            >
+              Max Imbalance (28 Jan)
+            </button>
+            <button
+              type="button"
+              className={`btn ${deliveryDate === '2026-01-19' ? 'solid' : 'ghost'}`}
+              onClick={() => onChangeDate('2026-01-19')}
+              title="Benchmark Tracking: Lowest MAE 407 MW"
+              style={{ fontSize: 11, padding: '0 8px', height: 36, display: 'inline-flex', alignItems: 'center' }}
+            >
+              Best Tracking (19 Jan)
             </button>
           </div>
         </div>
@@ -529,7 +578,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
             </button>
           </div>
           {copyMsg && (
-            <span className="copy-msg" style={{ fontSize: 11, color: '#000', fontWeight: 600 }}>
+            <span className="copy-msg" style={{ fontSize: 11, color: 'var(--fg)', fontWeight: 600 }}>
               {copyMsg}
             </span>
           )}
@@ -581,8 +630,8 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                   fontSize: 10,
                   fontFamily: 'var(--mono)',
                   padding: '2px 6px',
-                  background: Math.abs(metrics.mbe) > 500 ? '#000' : 'var(--surface)',
-                  color: Math.abs(metrics.mbe) > 500 ? '#fff' : '#000',
+                  background: Math.abs(metrics.mbe) > 500 ? 'var(--fg)' : 'var(--surface)',
+                  color: Math.abs(metrics.mbe) > 500 ? 'var(--bg)' : 'var(--fg)',
                   border: '1px solid var(--fg)',
                   fontWeight: 600,
                 }}
@@ -607,7 +656,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
         </div>
 
         {/* NEW: Financial Thermal Hedge & Cashout Estimator Card */}
-        <div className="cell card-cost" style={{ padding: 14, background: '#fafafa' }}>
+        <div className="cell card-cost" style={{ padding: 14, background: 'var(--surface-alt)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span className="kpi-label" style={{ fontWeight: 700 }}>
               Thermal Hedge & Cashout Risk
@@ -618,11 +667,11 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 type="number"
                 value={cashoutPrice}
                 onChange={(e) => setCashoutPrice(Number(e.target.value) || 0)}
-                style={{ width: 44, fontSize: 11, fontFamily: 'var(--mono)', padding: '1px 3px', border: '1px solid #000' }}
+                style={{ width: 44, fontSize: 11, fontFamily: 'var(--mono)', padding: '1px 3px', border: '1px solid var(--fg)', background: 'var(--bg)', color: 'var(--fg)' }}
               />
             </div>
           </div>
-          <span className="cell-value" style={{ fontSize: 20, marginTop: 4, color: '#000' }}>
+          <span className="cell-value" style={{ fontSize: 20, marginTop: 4, color: 'var(--fg)' }}>
             £{(metrics?.estimatedCostGbp || 0).toLocaleString('en-GB')}
           </span>
           <span className="kpi-sub" style={{ fontSize: 11, color: 'var(--muted)', display: 'block', marginTop: 4 }}>
@@ -679,7 +728,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
 
         <div style={{ fontFamily: 'var(--mono)', fontSize: 12 }}>
           {previewGate !== null ? (
-            <span style={{ color: '#000', fontWeight: 600 }}>
+            <span style={{ color: 'var(--fg)', fontWeight: 600 }}>
               Previewing cutoff: {String(previewGate).padStart(2, '0')}:00 GMT
             </span>
           ) : (
@@ -721,26 +770,55 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
             </span>
             <div style={{ display: 'flex', gap: 14, fontSize: 11, fontFamily: 'var(--mono)', alignItems: 'center' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 14, height: 2, background: '#000', display: 'inline-block' }} /> Actual
+                <span style={{ width: 14, height: 2, background: 'var(--fg)', display: 'inline-block' }} /> Actual
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 14, height: 2, borderBottom: '2px dashed #666', display: 'inline-block' }} /> Forecast
+                <span style={{ width: 14, height: 2, borderBottom: '2px dashed var(--dim)', display: 'inline-block' }} /> Forecast
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span
                   style={{
                     width: 12,
                     height: 10,
-                    border: '1px solid #000',
-                    backgroundImage: 'repeating-linear-gradient(45deg, #000, #000 1px, transparent 1px, transparent 4px)',
+                    border: '1px solid var(--fg)',
+                    backgroundImage: 'repeating-linear-gradient(45deg, var(--fg), var(--fg) 1px, transparent 1px, transparent 4px)',
                     display: 'inline-block',
                   }}
                 />{' '}
                 Over-forecast
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 12, height: 10, background: '#8F8F8F', display: 'inline-block' }} /> Under-forecast
+                <span style={{ width: 12, height: 10, background: 'var(--under-fill)', display: 'inline-block' }} /> Under-forecast
               </span>
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={() => setShowUncertaintyBand(!showUncertaintyBand)}
+                title="Toggle ±1.28σ (P10–P90) Confidence Uncertainty Envelope"
+                style={{
+                  fontSize: 10,
+                  padding: '1px 6px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  background: showUncertaintyBand ? 'var(--surface-alt)' : 'transparent',
+                  border: '1px solid var(--line)',
+                  fontFamily: 'var(--mono)',
+                  cursor: 'pointer',
+                }}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    background: 'var(--fg)',
+                    opacity: showUncertaintyBand ? 0.35 : 0.1,
+                    border: '1px dashed var(--fg)',
+                    display: 'inline-block',
+                  }}
+                />
+                P10–P90 Band: {showUncertaintyBand ? 'ON' : 'OFF'}
+              </button>
             </div>
           </div>
 
@@ -751,7 +829,8 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'rgba(255,255,255,0.7)',
+                  background: 'var(--bg)',
+                  opacity: 0.8,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -765,7 +844,18 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
             )}
             <svg
               viewBox={`0 0 ${W} ${H}`}
-              style={{ width: '100%', height: 'auto', display: 'block', background: '#fff' }}
+              style={{
+                width: '100%',
+                height: 'auto',
+                display: 'block',
+                background: 'var(--bg)',
+                cursor: hoverIndex !== null ? 'pointer' : 'default',
+              }}
+              onClick={() => {
+                if (hoverIndex !== null && periods[hoverIndex]) {
+                  setSelectedRevisionSP(periods[hoverIndex]);
+                }
+              }}
               onMouseMove={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const mouseX = ((e.clientX - rect.left) / rect.width) * W;
@@ -778,7 +868,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
             >
               <defs>
                 <pattern id="hatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
-                  <line x1="0" y1="0" x2="0" y2="8" stroke="#000" strokeWidth="1.2" />
+                  <line x1="0" y1="0" x2="0" y2="8" stroke="var(--fg)" strokeWidth="1.2" />
                 </pattern>
               </defs>
 
@@ -788,8 +878,8 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 const y = yOf(v);
                 return (
                   <g key={k}>
-                    <line x1={PL} x2={W - PR} y1={y} y2={y} stroke="#E4E4E4" strokeWidth="1" />
-                    <text x={PL - 8} y={y + 4} textAnchor="end" fontSize={11} fontFamily="var(--mono)" fill="#666">
+                    <line x1={PL} x2={W - PR} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />
+                    <text x={PL - 8} y={y + 4} textAnchor="end" fontSize={11} fontFamily="var(--mono)" fill="var(--dim)">
                       {fmtVal(v)}
                     </text>
                   </g>
@@ -802,11 +892,11 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 x2={xOf(rampIdx)}
                 y1={PT}
                 y2={PT + PH}
-                stroke="#B0B0B0"
+                stroke="var(--dim)"
                 strokeWidth="1"
                 strokeDasharray="2 4"
               />
-              <text x={xOf(rampIdx) + 4} y={PT + 12} fontSize={10} fontFamily="var(--mono)" fill="#767676">
+              <text x={xOf(rampIdx) + 4} y={PT + 12} fontSize={10} fontFamily="var(--mono)" fill="var(--dim)">
                 Morning ramp 07:00
               </text>
 
@@ -815,13 +905,41 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 x2={xOf(peakIdx)}
                 y1={PT}
                 y2={PT + PH}
-                stroke="#B0B0B0"
+                stroke="var(--dim)"
                 strokeWidth="1"
                 strokeDasharray="2 4"
               />
-              <text x={xOf(peakIdx) + 4} y={PT + 12} fontSize={10} fontFamily="var(--mono)" fill="#767676">
+              <text x={xOf(peakIdx) + 4} y={PT + 12} fontSize={10} fontFamily="var(--mono)" fill="var(--dim)">
                 Evening peak 18:00
               </text>
+
+              {/* Confidence Uncertainty Envelope (P10 to P90 / ±1.28σ corridor) */}
+              {showUncertaintyBand && periods.length > 1 && (
+                (() => {
+                  const stdDev = 780; // empirical UK wind forecast error std dev
+                  const upperPts = periods.map(
+                    (p, i) => `${xOf(i).toFixed(1)},${yOf((p.forecast_mw ?? 0) + 1.28 * stdDev).toFixed(1)}`
+                  );
+                  const lowerPts = periods
+                    .slice()
+                    .reverse()
+                    .map((p, i) => {
+                      const revIdx = periods.length - 1 - i;
+                      return `${xOf(revIdx).toFixed(1)},${yOf(Math.max(0, (p.forecast_mw ?? 0) - 1.28 * stdDev)).toFixed(1)}`;
+                    });
+                  const polyPoints = [...upperPts, ...lowerPts].join(' ');
+                  return (
+                    <polygon
+                      points={polyPoints}
+                      fill="var(--fg)"
+                      fillOpacity="0.06"
+                      stroke="var(--dim)"
+                      strokeWidth="0.8"
+                      strokeDasharray="3 3"
+                    />
+                  );
+                })()
+              )}
 
               {/* Shaded Areas Between Forecast and Actual */}
               {periods.slice(0, -1).map((p, i) => {
@@ -831,14 +949,14 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                 const a1 = periods[i + 1]?.actual_mw ?? a0;
                 const isOver = (f0 + f1) / 2 > (a0 + a1) / 2;
                 const pts = `${xOf(i)},${yOf(f0)} ${xOf(i + 1)},${yOf(f1)} ${xOf(i + 1)},${yOf(a1)} ${xOf(i)},${yOf(a0)}`;
-                return <polygon key={i} points={pts} fill={isOver ? 'url(#hatch)' : '#8F8F8F'} />;
+                return <polygon key={i} points={pts} fill={isOver ? 'url(#hatch)' : 'var(--under-fill)'} />;
               })}
 
               {/* Forecast Dashed Line */}
               <path
                 d={periods.map((p, i) => `${i ? 'L' : 'M'}${xOf(i).toFixed(1)} ${yOf(p.forecast_mw ?? 0).toFixed(1)}`).join(' ')}
                 fill="none"
-                stroke="#555"
+                stroke="var(--dim)"
                 strokeWidth="1.8"
                 strokeDasharray="6 4"
               />
@@ -847,7 +965,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
               <path
                 d={periods.map((p, i) => `${i ? 'L' : 'M'}${xOf(i).toFixed(1)} ${yOf(p.actual_mw ?? 0).toFixed(1)}`).join(' ')}
                 fill="none"
-                stroke="#000"
+                stroke="var(--fg)"
                 strokeWidth="2.4"
               />
 
@@ -862,7 +980,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     textAnchor={anchor}
                     fontSize={11}
                     fontFamily="var(--mono)"
-                    fill="#444"
+                    fill="var(--muted)"
                   >
                     {getTimeStr(idx)}
                   </text>
@@ -877,7 +995,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     x2={xOf(hoverIndex)}
                     y1={PT}
                     y2={PT + PH}
-                    stroke="#000"
+                    stroke="var(--fg)"
                     strokeWidth="1"
                     strokeDasharray="3 3"
                   />
@@ -885,16 +1003,16 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     cx={xOf(hoverIndex)}
                     cy={yOf(periods[hoverIndex].actual_mw ?? 0)}
                     r="4.5"
-                    fill="#000"
-                    stroke="#FFF"
+                    fill="var(--fg)"
+                    stroke="var(--bg)"
                     strokeWidth="1.5"
                   />
                   <circle
                     cx={xOf(hoverIndex)}
                     cy={yOf(periods[hoverIndex].forecast_mw ?? 0)}
                     r="4.5"
-                    fill="#FFF"
-                    stroke="#000"
+                    fill="var(--bg)"
+                    stroke="var(--fg)"
                     strokeWidth="1.5"
                   />
                 </g>
@@ -908,27 +1026,28 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                   position: 'absolute',
                   top: 20,
                   left: hoverIndex > n * 0.7 ? xOf(hoverIndex) - 220 : xOf(hoverIndex) + 15,
-                  background: '#000',
-                  color: '#fff',
+                  background: 'var(--bg)',
+                  color: 'var(--fg)',
+                  border: '1px solid var(--fg)',
                   padding: '8px 12px',
                   fontFamily: 'var(--mono)',
                   fontSize: 11,
                   lineHeight: 1.4,
                   pointerEvents: 'none',
                   zIndex: 20,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
                 }}
               >
-                <div style={{ fontWeight: 600, borderBottom: '1px solid #444', paddingBottom: 4, marginBottom: 4 }}>
+                <div style={{ fontWeight: 600, borderBottom: '1px solid var(--line)', paddingBottom: 4, marginBottom: 4 }}>
                   SP {periods[hoverIndex].period_index} · {periods[hoverIndex].start_time.slice(11, 16)} GMT
                 </div>
                 <div>Actual: {fmtVal(periods[hoverIndex].actual_mw)}</div>
                 <div>Forecast: {fmtVal(periods[hoverIndex].forecast_mw)}</div>
-                <div style={{ color: (periods[hoverIndex].error_mw ?? 0) > 0 ? '#ff9999' : '#99ccff' }}>
+                <div style={{ color: (periods[hoverIndex].error_mw ?? 0) > 0 ? 'var(--fg)' : 'var(--muted)' }}>
                   Delta: {fmtSigned(periods[hoverIndex].error_mw)} ({periods[hoverIndex].percentage_error}%)
                 </div>
-                <div style={{ fontSize: 9, color: '#aaa', marginTop: 4 }}>
-                  Run: {periods[hoverIndex].publish_time_used || 'Pre-Gate Closure'}
+                <div style={{ fontSize: 9, color: 'var(--dim)', marginTop: 4 }}>
+                  Run: {periods[hoverIndex].publish_time_used || 'Pre-Gate Closure'} · Click to trace convergence →
                 </div>
               </div>
             )}
@@ -955,17 +1074,17 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
 
             <svg viewBox={`0 0 ${W} ${EH}`} style={{ width: '100%', height: 'auto', display: 'block', marginTop: 8 }}>
               {/* Zero and Threshold Lines */}
-              <line x1={PL} x2={W - PR} y1={eyOf(0)} y2={eyOf(0)} stroke="#000" strokeWidth="1" />
-              <line x1={PL} x2={W - PR} y1={eyOf(1000)} y2={eyOf(1000)} stroke="#767676" strokeWidth="1" strokeDasharray="4 4" />
-              <line x1={PL} x2={W - PR} y1={eyOf(-1000)} y2={eyOf(-1000)} stroke="#767676" strokeWidth="1" strokeDasharray="4 4" />
+              <line x1={PL} x2={W - PR} y1={eyOf(0)} y2={eyOf(0)} stroke="var(--fg)" strokeWidth="1" />
+              <line x1={PL} x2={W - PR} y1={eyOf(1000)} y2={eyOf(1000)} stroke="var(--dim)" strokeWidth="1" strokeDasharray="4 4" />
+              <line x1={PL} x2={W - PR} y1={eyOf(-1000)} y2={eyOf(-1000)} stroke="var(--dim)" strokeWidth="1" strokeDasharray="4 4" />
 
-              <text x={PL - 8} y={eyOf(1000) + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="#666">
+              <text x={PL - 8} y={eyOf(1000) + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="var(--dim)">
                 +1,000
               </text>
-              <text x={PL - 8} y={eyOf(-1000) + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="#666">
+              <text x={PL - 8} y={eyOf(-1000) + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="var(--dim)">
                 −1,000
               </text>
-              <text x={PL - 8} y={eyOf(0) + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="#000" fontWeight="600">
+              <text x={PL - 8} y={eyOf(0) + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="var(--fg)" fontWeight="600">
                 0
               </text>
 
@@ -981,7 +1100,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     y={Math.min(y0, y1).toFixed(1)}
                     width={bw.toFixed(1)}
                     height={Math.max(1, Math.abs(y1 - y0)).toFixed(1)}
-                    fill={e > 0 ? '#000' : '#8F8F8F'}
+                    fill={e > 0 ? 'var(--fg)' : 'var(--under-fill)'}
                   />
                 );
               })}
@@ -997,7 +1116,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     textAnchor={anchor}
                     fontSize={11}
                     fontFamily="var(--mono)"
-                    fill="#444"
+                    fill="var(--muted)"
                   >
                     {getTimeStr(idx)}
                   </text>
@@ -1014,7 +1133,7 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
             style={{
               border: '1px solid var(--fg)',
               padding: 16,
-              background: '#fff',
+              background: 'var(--surface)',
               display: 'flex',
               flexDirection: 'column',
               gap: 16,
@@ -1044,8 +1163,9 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     fontWeight: 700,
                     fontFamily: 'var(--mono)',
                     padding: '1px 5px',
-                    background: (metrics?.mbe || 0) > 500 ? '#000' : '#E4E4E4',
-                    color: (metrics?.mbe || 0) > 500 ? '#fff' : '#000',
+                    background: (metrics?.mbe || 0) > 500 ? 'var(--fg)' : 'var(--surface-alt)',
+                    color: (metrics?.mbe || 0) > 500 ? 'var(--bg)' : 'var(--fg)',
+                    border: '1px solid var(--fg)',
                   }}
                 >
                   {(metrics?.mbe || 0) > 500 ? 'RISK' : 'WATCH'}
@@ -1069,8 +1189,8 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     fontWeight: 700,
                     fontFamily: 'var(--mono)',
                     padding: '1px 5px',
-                    background: '#000',
-                    color: '#fff',
+                    background: 'var(--fg)',
+                    color: 'var(--bg)',
                   }}
                 >
                   IMBALANCE
@@ -1093,8 +1213,9 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
                     fontWeight: 700,
                     fontFamily: 'var(--mono)',
                     padding: '1px 5px',
-                    background: '#E4E4E4',
-                    color: '#000',
+                    background: 'var(--surface-alt)',
+                    color: 'var(--fg)',
+                    border: '1px solid var(--line)',
                   }}
                 >
                   TAIL RISK
@@ -1110,6 +1231,23 @@ export const DecisionDesk: React.FC<DecisionDeskProps> = ({
           </aside>
         )}
       </div>
+
+      {/* Feature #1: Additional Thermal Procurement Schedule (SP-by-SP Dispatch Sheet) */}
+      <ThermalDispatchSheet
+        periods={periods}
+        cashoutPrice={cashoutPrice}
+        units={units}
+        onInspectPeriod={(period) => setSelectedRevisionSP(period)}
+      />
+
+      {/* Feature #3: Forecast Run Evolution & Convergence Modal */}
+      <ForecastEvolutionModal
+        isOpen={selectedRevisionSP !== null}
+        onClose={() => setSelectedRevisionSP(null)}
+        selectedPeriod={selectedRevisionSP}
+        gateClosureCutoff={data?.gate_closure_cutoff || `${deliveryDate}T11:00:00Z`}
+        units={units}
+      />
     </section>
   );
 };

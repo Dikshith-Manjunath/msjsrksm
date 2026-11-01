@@ -3,9 +3,10 @@ import { CometCard } from '@/components/ui/comet-card';
 
 interface LandingPageProps {
   onNavigate: (tab: 'desk' | 'risk') => void;
+  theme?: 'light' | 'dark';
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate, theme = 'light' }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     }
 
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(0xffffff, 1);
+    renderer.setClearColor(theme === 'dark' ? 0x000000 : 0xffffff, 1);
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 400);
@@ -34,39 +35,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     camera.lookAt(0, -1, 0);
 
     // ── Grid ──────────────────────────────────────────────────────────────
-    // The grid is a periodic structure with cell size CELL.
-    // We scroll the group by (t * SPEED) % CELL — because the grid repeats
-    // every CELL units, the wrap is invisible and the floor scrolls endlessly.
     const CELL = 2;
     const SPEED = 2.4; // world-units per second
 
     const group = new THREE.Group();
     scene.add(group);
 
-    const grid = new THREE.GridHelper(120, 60, 0x000000, 0xb8b8b8);
+    const gridCenterColor = theme === 'dark' ? 0xffffff : 0x000000;
+    const gridLineColor = theme === 'dark' ? 0x808080 : 0xb8b8b8;
+    const grid = new THREE.GridHelper(120, 60, gridCenterColor, gridLineColor);
     (grid.material as any).transparent = true;
-    (grid.material as any).opacity = 0.7;
+    (grid.material as any).opacity = theme === 'dark' ? 0.85 : 0.7;
     grid.position.y = -2;
     group.add(grid);
 
     // ── Dots ──────────────────────────────────────────────────────────────
-    // Each dot travels independently in Z.
-    // X is snapped to a grid column (looks correct alongside the grid).
-    // Z flows CONTINUOUSLY — no position snap ever. The dot wraps in Z over
-    // a range DEPTH, but we fade it out before the wrap and back in after,
-    // so the teleport is completely invisible.
-    //
-    // Layout:
-    //   Z travels from NEAR_Z (closest to camera) → FAR_Z (farthest away).
-    //   In Three.js a higher z-value is closer to the camera when the camera
-    //   looks in -z. We want dots to travel TOWARD the camera (increasing z),
-    //   so:   rawZ = (phase + travelled) % DEPTH   → worldZ = FAR_Z + rawZ
-    //   where FAR_Z = -50 and DEPTH = 80, so worldZ goes -50 → +30.
-    //
-    //   Fade zones: fade IN over first 15% of DEPTH (entering from the back),
-    //               fade OUT over last 10% of DEPTH (leaving toward camera).
-    //   At the wrap point rawZ = 0 the dot is fully invisible → no pop.
-
     const FAR_Z = -50;
     const DEPTH = 80;
     const FADE_IN_END = DEPTH * 0.15;
@@ -80,56 +63,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       return seed / 2147483647;
     }
 
-    // fixed X column (grid-snapped) + random Z phase spread across [0, DEPTH)
     const dotX = new Float32Array(DOT_COUNT);
     const dotPhase = new Float32Array(DOT_COUNT);
     for (let i = 0; i < DOT_COUNT; i++) {
       dotX[i] = Math.round((rnd() - 0.5) * 40) * CELL;
-      dotPhase[i] = rnd() * DEPTH; // stagger start positions across full depth
+      dotPhase[i] = rnd() * DEPTH;
     }
 
-    // mutable position buffer — updated every frame
-    const positions = new Float32Array(DOT_COUNT * 3);
-    const geo = new THREE.BufferGeometry();
-    const posAttr = new THREE.BufferAttribute(positions, 3);
-    posAttr.setUsage(THREE.DynamicDrawUsage);
-    geo.setAttribute('position', posAttr);
-
-    // We use a single shared opacity on the material and set per-dot alpha
-    // via a custom shader workaround — but Three.js r128 PointsMaterial
-    // doesn't support per-point alpha natively without a custom shader.
-    // Simplest correct approach: use TWO sets of Points — fully-visible and
-    // fading — so we can control opacity per-frame with minimal cost.
-    // Even simpler: treat opacity as a global material property updated each
-    // frame, and instead set invisible dots to a position behind the far clip
-    // so they don't render at all. We achieve per-dot visibility by moving
-    // "invisible" dots far behind the camera (y = -1000).
-
-    const mat = new THREE.PointsMaterial({
-      color: 0x111111,
-      size: 7,
-      sizeAttenuation: false,
-      transparent: true,
-      opacity: 1,
-    });
-
-    // We'll bucket dots into THREE opacity levels each frame using separate
-    // Points objects — but that's overkill. Instead we simply move invisible
-    // dots off-screen (y = -500) and vary the material opacity every frame
-    // using the average. A cleaner solution: use vertex colors for alpha.
-    // THREE r128 supports vertexColors on PointsMaterial — we set rgba via
-    // a color attribute where the alpha encodes opacity.
-    // Actually the simplest approach that works with r128: use TWO materials.
-    //   mat_full  — opacity 1 (full dots)
-    //   mat_fade  — opacity interpolated (fading dots)
-    // And route dots between two Points objects each frame.
-    //
-    // For simplicity (and correctness at 60fps) we just use a single Points
-    // object, move fading dots off-screen, and render a second pass for the
-    // fading band using a separate Points object with a dynamic opacity.
+    const dotColor = theme === 'dark' ? 0xffffff : 0x111111;
 
     // full-opacity dots
-    const matFull = new THREE.PointsMaterial({ color: 0x111111, size: 7, sizeAttenuation: false });
+    const matFull = new THREE.PointsMaterial({ color: dotColor, size: 7, sizeAttenuation: false });
     const posFull = new Float32Array(DOT_COUNT * 3);
     const geoFull = new THREE.BufferGeometry();
     const attrFull = new THREE.BufferAttribute(posFull, 3);
@@ -140,7 +84,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     scene.add(ptsFull);
 
     // fading-in dots (bottom of field — low rawZ)
-    const matFadeIn = new THREE.PointsMaterial({ color: 0x111111, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.5 });
+    const matFadeIn = new THREE.PointsMaterial({ color: dotColor, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.5 });
     const posFadeIn = new Float32Array(DOT_COUNT * 3);
     const geoFadeIn = new THREE.BufferGeometry();
     const attrFadeIn = new THREE.BufferAttribute(posFadeIn, 3);
@@ -151,7 +95,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     scene.add(ptsFadeIn);
 
     // fading-out dots (front of field — high rawZ)
-    const matFadeOut = new THREE.PointsMaterial({ color: 0x111111, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.5 });
+    const matFadeOut = new THREE.PointsMaterial({ color: dotColor, size: 7, sizeAttenuation: false, transparent: true, opacity: 0.5 });
     const posFadeOut = new Float32Array(DOT_COUNT * 3);
     const geoFadeOut = new THREE.BufferGeometry();
     const attrFadeOut = new THREE.BufferAttribute(posFadeOut, 3);
@@ -290,7 +234,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onPointerMove);
     };
-  }, []);
+  }, [theme]);
 
   return (
     <div className="landing-page" style={{ width: '100%' }}>

@@ -100,16 +100,16 @@ export const SensitivityModal: React.FC<SensitivityModalProps> = ({ isOpen, onCl
                     key={r.hour}
                     style={{
                       borderBottom: '1px solid var(--line)',
-                      background: isStandard ? '#f5f5f5' : 'transparent',
+                      background: isStandard ? 'var(--surface)' : 'transparent',
                       fontWeight: isStandard ? 600 : 400,
                     }}
                   >
                     <td style={{ padding: '10px' }}>
-                      {r.label} {isStandard && <span style={{ fontSize: 10, background: '#000', color: '#fff', padding: '1px 4px' }}>DEFAULT</span>}
+                      {r.label} {isStandard && <span style={{ fontSize: 10, background: 'var(--fg)', color: 'var(--bg)', padding: '1px 4px' }}>DEFAULT</span>}
                     </td>
                     <td style={{ textAlign: 'right', padding: '10px' }}>{Math.round(r.mae).toLocaleString()} MW</td>
                     <td style={{ textAlign: 'right', padding: '10px' }}>{Math.round(r.rmse).toLocaleString()} MW</td>
-                    <td style={{ textAlign: 'right', padding: '10px', color: r.bias > 0 ? '#b30000' : '#0066cc' }}>
+                    <td style={{ textAlign: 'right', padding: '10px', color: 'var(--fg)', fontWeight: 600 }}>
                       {r.bias > 0 ? '+' : ''}{Math.round(r.bias).toLocaleString()} MW
                     </td>
                     <td style={{ textAlign: 'right', padding: '10px' }}>{r.wape.toFixed(1)}%</td>
@@ -124,7 +124,7 @@ export const SensitivityModal: React.FC<SensitivityModalProps> = ({ isOpen, onCl
         )}
 
         <div style={{ marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--line)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button className="btn" onClick={onClose} style={{ background: '#000', color: '#fff' }}>
+          <button className="btn solid" onClick={onClose}>
             Done
           </button>
         </div>

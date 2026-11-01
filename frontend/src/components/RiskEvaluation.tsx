@@ -335,7 +335,7 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
         }}
       >
         {/* Left Chart: Error Distribution Histogram */}
-        <div style={{ border: '1px solid var(--line)', padding: 14, background: '#fff' }}>
+        <div style={{ border: '1px solid var(--line)', padding: 14, background: 'var(--surface)' }}>
           <div
             style={{
               display: 'flex',
@@ -361,8 +361,8 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                 const y = hyOf(v);
                 return (
                   <g key={t}>
-                    <line x1={HL} x2={HW - HR} y1={y} y2={y} stroke="#E4E4E4" strokeWidth="1" />
-                    <text x={HL - 6} y={y + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="#666">
+                    <line x1={HL} x2={HW - HR} y1={y} y2={y} stroke="var(--line)" strokeWidth="1" />
+                    <text x={HL - 6} y={y + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="var(--dim)">
                       {Math.round(v)}
                     </text>
                   </g>
@@ -381,15 +381,15 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                     y={y1.toFixed(1)}
                     width={Math.max(1, bw - 2).toFixed(1)}
                     height={Math.max(0, HT + ph - y1).toFixed(1)}
-                    fill="#D9D9D9"
-                    stroke="#000"
+                    fill="var(--surface-alt)"
+                    stroke="var(--fg)"
                     strokeWidth="0.6"
                   />
                 );
               })}
 
               {/* Fitted Normal Distribution Curve */}
-              {curvePts.length > 0 && <path d={curvePts.join(' ')} fill="none" stroke="#000" strokeWidth="2" />}
+              {curvePts.length > 0 && <path d={curvePts.join(' ')} fill="none" stroke="var(--fg)" strokeWidth="2" />}
 
               {/* X Axis Reference Labels */}
               {[-4000, -2000, 0, 2000, 4000].map((v) => {
@@ -403,7 +403,7 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                     textAnchor={anchor}
                     fontSize={10}
                     fontFamily="var(--mono)"
-                    fill="#333"
+                    fill="var(--muted)"
                   >
                     {v > 0 ? '+' : ''}
                     {v.toLocaleString('en-GB')}
@@ -428,21 +428,21 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
             }}
           >
             <span>
-              Mean: <strong style={{ color: '#000' }}>{metrics ? fmtSigned(metrics.distribution_stats.mean_mw) : '—'}</strong>
+              Mean: <strong style={{ color: 'var(--fg)' }}>{metrics ? fmtSigned(metrics.distribution_stats.mean_mw) : '—'}</strong>
             </span>
             <span>
               Std Dev (σ):{' '}
-              <strong style={{ color: '#000' }}>{metrics ? fmtVal(metrics.distribution_stats.std_dev_mw) : '—'}</strong>
+              <strong style={{ color: 'var(--fg)' }}>{metrics ? fmtVal(metrics.distribution_stats.std_dev_mw) : '—'}</strong>
             </span>
             <span>
               Excess Kurtosis:{' '}
-              <strong style={{ color: '#000' }}>
+              <strong style={{ color: 'var(--fg)' }}>
                 {metrics ? metrics.distribution_stats.excess_kurtosis.toFixed(2) : '—'}
               </strong>
             </span>
             <span>
               Beyond 2σ:{' '}
-              <strong style={{ color: '#000' }}>
+              <strong style={{ color: 'var(--fg)' }}>
                 {metrics ? `${metrics.distribution_stats.pct_beyond_2sigma}%` : '—'}
               </strong>{' '}
               {metrics && metrics.distribution_stats.pct_beyond_2sigma > 4.6 ? '(Fat tails detected)' : '(Normal tail)'}
@@ -451,7 +451,7 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
         </div>
 
         {/* Right Chart: Hourly Error Box Plot */}
-        <div style={{ border: '1px solid var(--line)', padding: 14, background: '#fff' }}>
+        <div style={{ border: '1px solid var(--line)', padding: 14, background: 'var(--surface)' }}>
           <div
             style={{
               display: 'flex',
@@ -481,10 +481,10 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                       x2={BW - BR}
                       y1={y}
                       y2={y}
-                      stroke={v === 0 ? '#000' : '#E4E4E4'}
+                      stroke={v === 0 ? 'var(--fg)' : 'var(--line)'}
                       strokeWidth={v === 0 ? '1.2' : '1'}
                     />
-                    <text x={BL - 6} y={y + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="#666">
+                    <text x={BL - 6} y={y + 4} textAnchor="end" fontSize={10} fontFamily="var(--mono)" fill="var(--dim)">
                       {v > 0 ? '+' : ''}
                       {Math.round(v).toLocaleString('en-GB')}
                     </text>
@@ -504,9 +504,9 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                 return (
                   <g key={bp.hour}>
                     {/* Whisker Line */}
-                    <line x1={xCenter} x2={xCenter} y1={yWLow} y2={yWHigh} stroke="#000" strokeWidth="1" />
-                    <line x1={xCenter - 3} x2={xCenter + 3} y1={yWLow} y2={yWLow} stroke="#000" strokeWidth="1" />
-                    <line x1={xCenter - 3} x2={xCenter + 3} y1={yWHigh} y2={yWHigh} stroke="#000" strokeWidth="1" />
+                    <line x1={xCenter} x2={xCenter} y1={yWLow} y2={yWHigh} stroke="var(--fg)" strokeWidth="1" />
+                    <line x1={xCenter - 3} x2={xCenter + 3} y1={yWLow} y2={yWLow} stroke="var(--fg)" strokeWidth="1" />
+                    <line x1={xCenter - 3} x2={xCenter + 3} y1={yWHigh} y2={yWHigh} stroke="var(--fg)" strokeWidth="1" />
 
                     {/* IQR Box (Q1 to Q3) */}
                     <rect
@@ -514,8 +514,8 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                       y={Math.min(yQ1, yQ3).toFixed(1)}
                       width={boxW.toFixed(1)}
                       height={Math.max(2, Math.abs(yQ3 - yQ1)).toFixed(1)}
-                      fill="#EAEAEA"
-                      stroke="#000"
+                      fill="var(--surface-alt)"
+                      stroke="var(--fg)"
                       strokeWidth="1"
                     />
 
@@ -525,13 +525,13 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                       x2={(xCenter + boxW / 2).toFixed(1)}
                       y1={yMed}
                       y2={yMed}
-                      stroke="#000"
+                      stroke="var(--fg)"
                       strokeWidth="2"
                     />
 
                     {/* Outlier Dots */}
                     {bp.outliers_mw.slice(0, 4).map((outlierVal, oIdx) => (
-                      <circle key={oIdx} cx={xCenter} cy={byOf(outlierVal)} r="1.8" fill="#000" />
+                      <circle key={oIdx} cx={xCenter} cy={byOf(outlierVal)} r="1.8" fill="var(--fg)" />
                     ))}
                   </g>
                 );
@@ -546,7 +546,7 @@ export const RiskEvaluation: React.FC<RiskEvaluationProps> = ({
                   textAnchor="middle"
                   fontSize={10}
                   fontFamily="var(--mono)"
-                  fill="#444"
+                  fill="var(--muted)"
                 >
                   {String(h).padStart(2, '0')}:00
                 </text>
