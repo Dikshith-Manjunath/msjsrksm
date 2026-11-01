@@ -12,6 +12,41 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
+# AI Agents, LLM Coding Tools & Rules
+.agent/
+.agents/
+.claude/
+CLAUDE.md
+AGENTS.md
+claude.json
+.cursor/
+.cursorrules
+.gemini/
+.windsurf/
+.antigravity/
+.copilot/
+.openai/
+.anthropic/
+.continue/
+*.agent
+
+# Internal Evaluation, Challenge & Planning Docs
+*challenge*.docx
+*challenge*.pdf
+*internship*.docx
+*internship*.md
+*master_guide*.md
+implementation_plan.md
+walkthrough.md
+*Report*.docx
+Pasted image*.png
+
+# UI Scratch Prototypes
+UI/GridBricks*
+UI/summary.md
+UI/*.docx
+UI/*.png
+
 # Python
 __pycache__/
 *.py[cod]
@@ -63,6 +98,10 @@ backend/data/*.db-journal
 .env.local
 .env.*.local
 *.env
+*.pem
+*.key
+credentials*
+secrets*
 
 # IDEs & Editor Configuration
 .idea/
