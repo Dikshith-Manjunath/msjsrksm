@@ -4,6 +4,7 @@ import { StatusStrip } from './components/StatusStrip';
 import { DecisionDesk } from './components/DecisionDesk';
 import { RiskEvaluation } from './components/RiskEvaluation';
 import { LandingPage } from './components/LandingPage';
+import { DocumentationPage } from './components/DocumentationPage';
 import { Footer } from './components/Footer';
 import { TourModal } from './components/TourModal';
 import { SensitivityModal } from './components/SensitivityModal';
@@ -11,8 +12,26 @@ import { fetchHealth, fetchDates, fetchForecasts, fetchMetrics, triggerSync } fr
 import { DayAheadForecastResponse, QuantitativeMetricsResponse, HealthStatus } from './types';
 
 export const App: React.FC = () => {
-  // Navigation & View Routing ('landing' | 'desk' | 'risk')
-  const [currentTab, setCurrentTab] = useState<'landing' | 'desk' | 'risk'>('desk');
+  // Theme State
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('wind_desk_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+      ? 'dark'
+      : 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('wind_desk_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // Navigation & View Routing ('landing' | 'desk' | 'risk' | 'docs')
+  const [currentTab, setCurrentTab] = useState<'landing' | 'desk' | 'risk' | 'docs'>('desk');
 
   // Shared Settings
   const [deliveryDate, setDeliveryDate] = useState<string>('2026-01-15');
@@ -40,12 +59,17 @@ export const App: React.FC = () => {
   const [isTourOpen, setIsTourOpen] = useState<boolean>(false);
   const [isSensitivityOpen, setIsSensitivityOpen] = useState<boolean>(false);
 
-  // Initialize hash route listener
+  // Initialize hash & pathname route listener
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash;
-      if (hash === '#risk') setCurrentTab('risk');
-      else if (hash === '#landing' || hash === '#features' || hash === '#views' || hash === '#method' || hash === '#start') {
+      const path = window.location.pathname;
+
+      if (path === '/docs' || hash === '#docs') {
+        setCurrentTab('docs');
+      } else if (hash === '#risk') {
+        setCurrentTab('risk');
+      } else if (hash === '#landing' || hash === '#features' || hash === '#views' || hash === '#method' || hash === '#start') {
         setCurrentTab('landing');
       } else {
         setCurrentTab('desk');
@@ -56,9 +80,16 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  const handleSelectTab = (tab: 'landing' | 'desk' | 'risk') => {
+  const handleSelectTab = (tab: 'landing' | 'desk' | 'risk' | 'docs') => {
     setCurrentTab(tab);
-    window.location.hash = tab === 'desk' ? '#desk' : tab === 'risk' ? '#risk' : '#landing';
+    window.location.hash =
+      tab === 'desk'
+        ? '#desk'
+        : tab === 'risk'
+        ? '#risk'
+        : tab === 'docs'
+        ? '#docs'
+        : '#landing';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -187,18 +218,20 @@ export const App: React.FC = () => {
         onOpenSensitivity={() => setIsSensitivityOpen(true)}
         onTriggerSync={handleTriggerSync}
         isSyncing={isSyncing}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       <div className="app">
         {/* Real-Time Market Status Strip (Shown on Desk and Risk views) */}
-        {currentTab !== 'landing' && (
+        {currentTab !== 'landing' && currentTab !== 'docs' && (
           <StatusStrip deliveryDate={deliveryDate} gateClosureHour={gateClosureHour} />
         )}
 
         {/* Main Tab Views */}
         <main>
           {currentTab === 'landing' ? (
-            <LandingPage onNavigate={handleSelectTab} />
+            <LandingPage onNavigate={handleSelectTab} theme={theme} />
           ) : currentTab === 'desk' ? (
             <DecisionDesk
               data={forecastData}
@@ -213,7 +246,7 @@ export const App: React.FC = () => {
               onChangeUnits={setUnits}
               allDates={allDates}
             />
-          ) : (
+          ) : currentTab === 'risk' ? (
             <RiskEvaluation
               metrics={metricsData}
               loading={loadingRisk}
@@ -230,6 +263,8 @@ export const App: React.FC = () => {
               units={units}
               onChangeUnits={setUnits}
             />
+          ) : (
+            <DocumentationPage />
           )}
         </main>
 
