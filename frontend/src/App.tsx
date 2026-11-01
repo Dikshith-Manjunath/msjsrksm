@@ -4,7 +4,6 @@ import { StatusStrip } from './components/StatusStrip';
 import { DecisionDesk } from './components/DecisionDesk';
 import { RiskEvaluation } from './components/RiskEvaluation';
 import { LandingPage } from './components/LandingPage';
-import { DocumentationPage } from './components/DocumentationPage';
 import { Footer } from './components/Footer';
 import { TourModal } from './components/TourModal';
 import { SensitivityModal } from './components/SensitivityModal';
@@ -30,8 +29,8 @@ export const App: React.FC = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation & View Routing ('landing' | 'desk' | 'risk' | 'docs')
-  const [currentTab, setCurrentTab] = useState<'landing' | 'desk' | 'risk' | 'docs'>('desk');
+  // Navigation & View Routing ('landing' | 'desk' | 'risk')
+  const [currentTab, setCurrentTab] = useState<'landing' | 'desk' | 'risk'>('desk');
 
   // Shared Settings
   const [deliveryDate, setDeliveryDate] = useState<string>('2026-01-15');
@@ -63,11 +62,8 @@ export const App: React.FC = () => {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash;
-      const path = window.location.pathname;
 
-      if (path === '/docs' || hash === '#docs') {
-        setCurrentTab('docs');
-      } else if (hash === '#risk') {
+      if (hash === '#risk') {
         setCurrentTab('risk');
       } else if (hash === '#landing' || hash === '#features' || hash === '#views' || hash === '#method' || hash === '#start') {
         setCurrentTab('landing');
@@ -80,15 +76,13 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
-  const handleSelectTab = (tab: 'landing' | 'desk' | 'risk' | 'docs') => {
+  const handleSelectTab = (tab: 'landing' | 'desk' | 'risk') => {
     setCurrentTab(tab);
     window.location.hash =
       tab === 'desk'
         ? '#desk'
         : tab === 'risk'
         ? '#risk'
-        : tab === 'docs'
-        ? '#docs'
         : '#landing';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -224,7 +218,7 @@ export const App: React.FC = () => {
 
       <div className="app">
         {/* Real-Time Market Status Strip (Shown on Desk and Risk views) */}
-        {currentTab !== 'landing' && currentTab !== 'docs' && (
+        {currentTab !== 'landing' && (
           <StatusStrip deliveryDate={deliveryDate} gateClosureHour={gateClosureHour} />
         )}
 
@@ -246,7 +240,7 @@ export const App: React.FC = () => {
               onChangeUnits={setUnits}
               allDates={allDates}
             />
-          ) : currentTab === 'risk' ? (
+          ) : (
             <RiskEvaluation
               metrics={metricsData}
               loading={loadingRisk}
@@ -263,8 +257,6 @@ export const App: React.FC = () => {
               units={units}
               onChangeUnits={setUnits}
             />
-          ) : (
-            <DocumentationPage />
           )}
         </main>
 

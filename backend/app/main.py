@@ -40,9 +40,15 @@ A high-performance trading support system for UK energy utilities participating 
 * **Low-Latency Storage:** High-concurrency SQLite with Write-Ahead Logging (WAL) and in-memory query caching.
     """,
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
+
+# Redirect root /docs to /api/docs
+@app.get("/docs", include_in_schema=False)
+def redirect_docs_to_api_docs():
+    return RedirectResponse(url="/api/docs")
 
 # Compression middleware for high-speed network delivery
 app.add_middleware(GZipMiddleware, minimum_size=1000)

@@ -2,8 +2,8 @@ import React from 'react';
 import { HealthStatus } from '../types';
 
 interface HeaderProps {
-  currentTab: 'landing' | 'desk' | 'risk' | 'docs';
-  onSelectTab: (tab: 'landing' | 'desk' | 'risk' | 'docs') => void;
+  currentTab: 'landing' | 'desk' | 'risk';
+  onSelectTab: (tab: 'landing' | 'desk' | 'risk') => void;
   health: HealthStatus | null;
   pingMs: number | null;
   onOpenTour: () => void;
@@ -69,15 +69,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             Risk & Evaluation
           </button>
-          <button
-            className="tab"
-            role="tab"
-            aria-selected={currentTab === 'docs'}
-            aria-current={currentTab === 'docs' ? 'page' : undefined}
-            onClick={() => onSelectTab('docs')}
-          >
-            Documentation
-          </button>
         </div>
       </div>
 
@@ -141,14 +132,14 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
 
         <a
-          href="http://127.0.0.1:8000/docs"
+          href="/api/docs"
           target="_blank"
           rel="noreferrer"
           className="btn ghost"
-          title="Open FastAPI Interactive Swagger OpenAPI Specifications"
+          title="Open Interactive API Documentation (OpenAPI / Swagger)"
           style={{ fontSize: 11, padding: '4px 8px', textDecoration: 'none' }}
         >
-          Swagger ↗
+          API Documentation ↗
         </a>
 
         <button
