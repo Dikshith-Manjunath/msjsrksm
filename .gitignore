@@ -41,6 +41,11 @@ walkthrough.md
 *Report*.docx
 Pasted image*.png
 
+# Video Scripts & Internal Utilities
+/scripts/
+script.docx
+*.script.docx
+
 # UI Scratch Prototypes
 UI/GridBricks*
 UI/summary.md
