@@ -84,6 +84,58 @@ class Repository:
             """, (start_time_pattern, gate_closure_cutoff)).fetchall()
             return [dict(row) for row in rows]
 
+    def get_forecast_revisions_for_target(
+        self,
+        target_start_time: str,
+        gate_closure_cutoff: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Fetch all forecast revisions published over time for a specific target interval,
+        along with the actual generation, showing how forecasts converged.
+        """
+        iso_target = target_start_time.replace(" ", "T")
+        if not iso_target.endswith("Z"):
+            iso_target = f"{iso_target}Z"
+
+        with get_db(self.db_path) as conn:
+            actual_row = conn.execute(
+                "SELECT generation FROM actual_generation WHERE start_time = ? LIMIT 1;",
+                (iso_target,)
+            ).fetchone()
+            actual_mw = actual_row["generation"] if actual_row else None
+
+            cutoff_val = gate_closure_cutoff or "9999-99-99"
+            rows = conn.execute("""
+                SELECT 
+                    publish_time, 
+                    generation as forecast_mw,
+                    CASE WHEN publish_time <= ? THEN 1 ELSE 0 END as is_prior_to_cutoff
+                FROM forecast_generation
+                WHERE start_time = ?
+                ORDER BY publish_time ASC;
+            """, (cutoff_val, iso_target)).fetchall()
+
+            revisions = []
+            for r in rows:
+                fc = r["forecast_mw"]
+                err = (fc - actual_mw) if actual_mw is not None else None
+                pct_err = round((err / actual_mw) * 100, 1) if actual_mw and actual_mw > 0 else None
+                revisions.append({
+                    "publish_time": r["publish_time"],
+                    "forecast_mw": fc,
+                    "error_mw": err,
+                    "percentage_error": pct_err,
+                    "is_prior_to_cutoff": bool(r["is_prior_to_cutoff"])
+                })
+
+            return {
+                "target_start_time": iso_target,
+                "actual_mw": actual_mw,
+                "gate_closure_cutoff": gate_closure_cutoff,
+                "total_revisions": len(revisions),
+                "revisions": revisions
+            }
+
     def get_distinct_dates(self) -> List[str]:
         """Fetch all available settlement dates present in actual generation."""
         with get_db(self.db_path) as conn:

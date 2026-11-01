@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from app.db.repository import Repository
 from app.services.alignment import AlignmentService
 from app.schemas.forecast import DayAheadForecastResponse
@@ -57,6 +57,26 @@ def get_forecasts(
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to align day-ahead data: {str(e)}")
+
+@router.get(
+    "/forecasts/revisions",
+    summary="Forecast Run Convergence & Revision History for a Settlement Period"
+)
+def get_forecast_revisions(
+    start_time: str = Query(
+        ...,
+        description="Target settlement period start time (e.g. 2026-01-15T18:00:00Z)"
+    ),
+    cutoff: Optional[str] = Query(
+        None,
+        description="Optional gate closure cutoff timestamp to evaluate pre- vs post-cutoff runs"
+    )
+) -> Dict[str, Any]:
+    repo = Repository()
+    try:
+        return repo.get_forecast_revisions_for_target(start_time, cutoff)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch forecast revisions: {str(e)}")
 
 def clear_forecast_cache():
     _FORECAST_CACHE.clear()

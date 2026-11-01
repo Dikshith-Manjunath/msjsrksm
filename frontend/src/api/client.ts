@@ -1,4 +1,9 @@
-import { DayAheadForecastResponse, QuantitativeMetricsResponse, HealthStatus } from '../types';
+import {
+  DayAheadForecastResponse,
+  QuantitativeMetricsResponse,
+  HealthStatus,
+  ForecastRevisionsResponse,
+} from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '';
 
@@ -56,5 +61,16 @@ export async function fetchMetrics(
 export async function triggerSync(force: boolean = false): Promise<any> {
   const res = await fetch(`${API_BASE}/api/v1/sync?force=${force}`, { method: 'POST' });
   if (!res.ok) throw new Error(`Sync trigger failed (${res.status})`);
+  return res.json();
+}
+
+export async function fetchForecastRevisions(
+  startTime: string,
+  cutoff?: string
+): Promise<ForecastRevisionsResponse> {
+  const params = new URLSearchParams({ start_time: startTime });
+  if (cutoff) params.append('cutoff', cutoff);
+  const res = await fetch(`${API_BASE}/api/v1/forecasts/revisions?${params.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch forecast revisions (${res.status})`);
   return res.json();
 }

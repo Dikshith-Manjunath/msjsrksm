@@ -103,3 +103,19 @@ export interface HealthStatus {
     is_seeded: boolean;
   };
 }
+
+export interface ForecastRevisionItem {
+  publish_time: string;
+  forecast_mw: number;
+  error_mw: number | null;
+  percentage_error: number | null;
+  is_prior_to_cutoff: boolean;
+}
+
+export interface ForecastRevisionsResponse {
+  target_start_time: string;
+  actual_mw: number | null;
+  gate_closure_cutoff: string | null;
+  total_revisions: number;
+  revisions: ForecastRevisionItem[];
+}
