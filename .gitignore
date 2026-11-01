@@ -1,3 +1,17 @@
+# ==========================================
+# Wind Forecast Desk - .gitignore
+# ==========================================
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
 # Python
 __pycache__/
 *.py[cod]
@@ -10,8 +24,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-/lib/
-/lib64/
+lib/
+lib64/
 parts/
 sdist/
 var/
@@ -19,6 +33,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.manifest
+*.spec
 
 # Virtual Environment & Tooling
 .venv/
@@ -28,34 +44,52 @@ env/
 .bin/
 .node/
 
-# Testing & Linting
+# Testing & Coverage
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .ruff_cache/
 .mypy_cache/
 
-# Databases & Local Data
+# Databases & SQLite Temporary Files
 backend/data/*.db-wal
 backend/data/*.db-shm
 backend/data/*.db-journal
+*.sqlite3-journal
 
-# Environment variables & secrets
+# Environment variables & local secrets
 .env
 .env.local
 .env.*.local
+*.env
 
-# IDEs & Notes
+# IDEs & Editor Configuration
 .idea/
 .vscode/
-.obsidian/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
+.obsidian/
 
-# Node / Frontend (for future UI)
+# Node & Frontend Build Artifacts
 node_modules/
+**/node_modules/
 dist/
+**/dist/
+*.tsbuildinfo
+.eslintcache
+
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# Vercel & Deployment Tooling
+.vercel/
+.vercel
+out/
