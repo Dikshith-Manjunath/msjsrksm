@@ -13,7 +13,14 @@ class Settings(BaseSettings):
     # Paths
     BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
     DATA_DIR: Path = BASE_DIR / "data"
-    DATABASE_PATH: Path = DATA_DIR / "elexon_jan2026.db"
+    
+    @property
+    def DATABASE_PATH(self) -> Path:
+        if os.environ.get("VERCEL"):
+            tmp_db = Path("/tmp/elexon_jan2026.db")
+            if tmp_db.exists():
+                return tmp_db
+        return self.DATA_DIR / "elexon_jan2026.db"
     
     # Elexon BMRS API Endpoints
     ELEXON_BASE_URL: str = "https://data.elexon.co.uk/bmrs/api/v1/datasets"
