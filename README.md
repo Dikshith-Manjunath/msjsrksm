@@ -14,10 +14,9 @@
 
 ## 1. Live Deployment & Demo
 
-* **Live Web Application (Vercel / Render):** `https://<YOUR-DEPLOYMENT-URL>.vercel.app` *(or update with your deployed URL)*
+* **Live Web Application (Vercel / Render):** `https://msjrksm.vercel.app`
 * **Interactive OpenAPI Swagger Docs:** `http://localhost:8000/docs` (or `/docs` on your live host)
 * **ReDoc Specification:** `http://localhost:8000/redoc`
-* **Video Demo (Unlisted YouTube):** `https://youtu.be/<YOUR-UNLISTED-VIDEO-ID>` *(10-minute presentation: Part 1 Customer Pitch + Part 2 Tech Lead Knowledge Transfer)*
 
 ---
 
